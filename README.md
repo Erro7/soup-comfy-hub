@@ -1,6 +1,6 @@
 # Soup-Comfy-Hub
 
-Single-GPU orchestration for ComfyUI image/video workflows and Soup fine-tuning, with a FastAPI gateway, Bearer authentication, persistent async tasks, a ModelScope-friendly bootstrap, and a Studio reverse proxy.
+API-first single-GPU runtime for ComfyUI image/video workflows. ComfyUI and the FastAPI gateway form the required core; Soup fine-tuning and Cloudflared are optional.
 
 ## What is implemented
 
@@ -8,7 +8,7 @@ Single-GPU orchestration for ComfyUI image/video workflows and Soup fine-tuning,
 - `POST /v1/videos/generations`: sync or async Wan I2V request, MP4/WebM extraction, persistent task state.
 - `POST /v1/pipelines/portrait-to-video`: image-to-video chained task.
 - `GET /v1/tasks/{task_id}` and authenticated output downloads.
-- `POST /v1/soup/train`: isolated subprocess with captured logs.
+- Optional `POST /v1/soup/train`: registered only when `ENABLE_SOUP=1` and Soup was installed.
 - One exclusive GPU lock across image, video, and training; ComfyUI `/free` is called at workload transitions.
 - Local Gradio status console at `/ui` and a lightweight Studio proxy.
 - Chinese AI pose/costume/portrait gallery nodes from `anhao/ai-pose-gallery-zh`.
@@ -40,19 +40,27 @@ Before `make up`, run `make doctor`. After startup, run `make smoke`.
 
 ### Runtime portability
 
-The same runtime supports ModelScope Notebook and NVIDIA Docker. Paths are derived from the checkout by default and can be overridden with `DATA_DIR`, `COMFY_DIR`, `VENV_DIR`, and `PROJECT_DIR`.
+The same runtime supports ModelScope Notebook and NVIDIA Docker. Notebook mode keeps its environment under the persistent workspace. The GPU container image bakes in Python, ComfyUI, custom nodes, and API dependencies at build time; startup does not install packages. Models and generated data are mounted as separate persistent volumes.
 
 ```bash
+cp .env.example .env
 docker compose build
 docker compose run --rm runtime bash scripts/download_models.sh
 docker compose up -d
+curl -fsS http://127.0.0.1:8000/readyz
 ```
+
+The gateway starts only after ComfyUI answers its health endpoint. `/healthz` checks the gateway process; `/readyz` verifies the usable API-to-ComfyUI path.
 
 For a literal first-run download, set `AUTO_DOWNLOAD_MODELS=1`; expect a large download and a long initial startup. Keeping it off is safer for restarts and metered storage.
 
 The root `Dockerfile` is the lightweight ModelScope Studio reverse proxy and listens on `0.0.0.0:7860`. Configure Studio secrets `GATEWAY_PUBLIC_URL`, `API_KEY`, `CLUSTER_KEY`, and `STUDIO_API_KEY`. Studio clients authenticate with `X-API-Key` because ModelScope reserves the standard `Authorization` header.
 
 Cloudflared is optional. It starts only when both `ENABLE_CLOUDFLARED=1` and `CLOUDFLARE_TUNNEL_TOKEN` are set.
+
+### Optional Soup
+
+Soup is disabled by default and is not needed for image or video APIs. In Notebook mode, install and enable it with `INSTALL_SOUP=1 make init` plus `ENABLE_SOUP=1`. For Docker, set both values before `docker compose build`; enabling Soup at runtime without building it into the image will fail `make doctor`.
 
 ### Pose gallery plugin
 
