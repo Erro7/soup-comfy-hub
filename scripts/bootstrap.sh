@@ -46,6 +46,9 @@ install_node https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git ComfyUI
 install_node https://github.com/city96/ComfyUI-GGUF.git ComfyUI-GGUF
 install_node https://github.com/cubiq/ComfyUI_InstantID.git ComfyUI_InstantID
 install_node https://github.com/cubiq/ComfyUI_IPAdapter_plus.git ComfyUI_IPAdapter_plus
+if [ "${INSTALL_POSE_GALLERY:-1}" = "1" ]; then
+  install_node https://github.com/anhao/ai-pose-gallery-zh.git ai-pose-gallery-zh
+fi
 
 mkdir -p "${TASK_OUTPUT_DIR}" "${PROJECT_DIR}/logs" "${COMFY_INPUT_DIR}" "${COMFY_OUTPUT_DIR}"
 [ -f "${PROJECT_DIR}/.env" ] || cp "${PROJECT_DIR}/.env.example" "${PROJECT_DIR}/.env"

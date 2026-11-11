@@ -12,6 +12,9 @@ check_file "${COMFY_DIR}/main.py" "ComfyUI"
 check_dir "${COMFY_DIR}/custom_nodes/ComfyUI-VideoHelperSuite" "VideoHelperSuite"
 check_dir "${COMFY_DIR}/custom_nodes/ComfyUI_InstantID" "InstantID nodes"
 check_dir "${COMFY_DIR}/custom_nodes/ComfyUI_IPAdapter_plus" "IPAdapter nodes"
+if [ "${INSTALL_POSE_GALLERY:-1}" = "1" ]; then
+  check_dir "${COMFY_DIR}/custom_nodes/ai-pose-gallery-zh/comfyui_plugin" "AI pose gallery zh"
+fi
 check_file "${COMFY_DIR}/models/diffusion_models/wan2.1_i2v_720p_14B_fp8_e4m3fn.safetensors" "Wan 2.1 FP8"
 check_file "${COMFY_DIR}/models/vae/wan_2.1_vae.safetensors" "Wan VAE"
 check_file "${COMFY_DIR}/models/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors" "Wan text encoder"

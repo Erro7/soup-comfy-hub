@@ -11,6 +11,7 @@ Single-GPU orchestration for ComfyUI image/video workflows and Soup fine-tuning,
 - `POST /v1/soup/train`: isolated subprocess with captured logs.
 - One exclusive GPU lock across image, video, and training; ComfyUI `/free` is called at workload transitions.
 - Local Gradio status console at `/ui` and a lightweight Studio proxy.
+- Chinese AI pose/costume/portrait gallery nodes from `anhao/ai-pose-gallery-zh`.
 
 ## Important workflow status
 
@@ -52,6 +53,10 @@ For a literal first-run download, set `AUTO_DOWNLOAD_MODELS=1`; expect a large d
 The root `Dockerfile` is the lightweight ModelScope Studio reverse proxy and listens on `0.0.0.0:7860`. Configure Studio secrets `GATEWAY_PUBLIC_URL`, `API_KEY`, `CLUSTER_KEY`, and `STUDIO_API_KEY`. Studio clients authenticate with `X-API-Key` because ModelScope reserves the standard `Authorization` header.
 
 Cloudflared is optional. It starts only when both `ENABLE_CLOUDFLARED=1` and `CLOUDFLARE_TUNNEL_TOKEN` are set.
+
+### Pose gallery plugin
+
+Bootstrap installs [`anhao/ai-pose-gallery-zh`](https://github.com/anhao/ai-pose-gallery-zh) into ComfyUI `custom_nodes` by default. It provides pose, costume, portrait and three-in-one recipe nodes. The repository includes a large offline image library, so the first clone requires roughly 1.1 GB in addition to model weights. Set `INSTALL_POSE_GALLERY=0` only when building a minimal runtime. The gallery contains optional 18+ reference categories; its own safe mode and source-specific image licenses still apply.
 
 ### PyPI mirror selection
 
