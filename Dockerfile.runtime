@@ -1,10 +1,28 @@
 FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
+
+ARG PIP_MIRROR=auto
+ARG INSTALL_POSE_GALLERY=1
+ARG INSTALL_SOUP=0
+ARG TZ=Etc/UTC
+
 ENV DEBIAN_FRONTEND=noninteractive PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
-    PROJECT_DIR=/app DATA_DIR=/data COMFY_DIR=/data/ComfyUI VENV_DIR=/data/venv \
-    GATEWAY_HOST=0.0.0.0 GATEWAY_PORT=8000
-RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-venv python3-pip ffmpeg git curl ca-certificates && rm -rf /var/lib/apt/lists/*
+    PROJECT_DIR=/app DATA_DIR=/data COMFY_DIR=/opt/ComfyUI VENV_DIR=/opt/venv \
+    COMFY_INPUT_DIR=/data/input COMFY_OUTPUT_DIR=/data/comfy-output \
+    TASK_OUTPUT_DIR=/data/outputs TASK_DB_PATH=/data/outputs/tasks.sqlite3 \
+    GATEWAY_HOST=0.0.0.0 GATEWAY_PORT=8000 \
+    PIP_MIRROR=${PIP_MIRROR} INSTALL_POSE_GALLERY=${INSTALL_POSE_GALLERY} \
+    INSTALL_SOUP=${INSTALL_SOUP} TZ=${TZ}
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3 python3-venv python3-pip ffmpeg git curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 COPY . .
+RUN bash scripts/bootstrap.sh \
+    && rm -rf /opt/ComfyUI/models/* /root/.cache/pip /data/* \
+    && mkdir -p /opt/ComfyUI/models /data/input /data/comfy-output /data/outputs
+
 EXPOSE 8000
-VOLUME ["/data"]
+VOLUME ["/opt/ComfyUI/models", "/data"]
 ENTRYPOINT ["bash", "scripts/container_entrypoint.sh"]
