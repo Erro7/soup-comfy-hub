@@ -7,6 +7,7 @@ services:
         PIP_MIRROR: ${PIP_MIRROR:-auto}
         INSTALL_POSE_GALLERY: ${INSTALL_POSE_GALLERY:-1}
         INSTALL_SOUP: ${INSTALL_SOUP:-0}
+        GITHUB_MIRROR_PREFIX: ${GITHUB_MIRROR_PREFIX:-auto}
     env_file: .env
     environment:
       PROJECT_DIR: /app
