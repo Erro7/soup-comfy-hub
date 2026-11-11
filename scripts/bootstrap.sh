@@ -22,7 +22,10 @@ python3 -m venv "${VENV_DIR}"
 source "${VENV_DIR}/bin/activate"
 prepare_pip_cache "${DATA_DIR}/.pip-index-url"
 python -m pip install --upgrade pip wheel
-python -m pip install -r "${PROJECT_DIR}/requirements.txt" 'soup-cli[train]' modelscope
+python -m pip install -r "${PROJECT_DIR}/requirements.txt" modelscope
+if [ "${INSTALL_SOUP:-0}" = "1" ]; then
+  python -m pip install 'soup-cli[train]'
+fi
 
 if [ ! -d "${COMFY_DIR}/.git" ]; then
   git clone --depth 1 https://github.com/Comfy-Org/ComfyUI.git "${COMFY_DIR}"
