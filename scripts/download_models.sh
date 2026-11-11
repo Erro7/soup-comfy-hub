@@ -7,6 +7,11 @@ WAN_REPO="${WAN_REPO:-Comfy-Org/Wan_2.1_ComfyUI_repackaged}"
 WAN_MODEL="${WAN_MODEL:-split_files/diffusion_models/wan2.1_i2v_720p_14B_fp8_e4m3fn.safetensors}"
 
 source "${VENV_DIR}/bin/activate"
+if ! python -c 'import modelscope' >/dev/null 2>&1; then
+  MODELSCOPE_PIP_INDEX_URL="${MODELSCOPE_PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}"
+  echo "Installing optional ModelScope downloader from ${MODELSCOPE_PIP_INDEX_URL}"
+  python -m pip install --index-url "${MODELSCOPE_PIP_INDEX_URL}" modelscope
+fi
 mkdir -p "${COMFY_DIR}/models/vae" "${COMFY_DIR}/models/text_encoders" "${COMFY_DIR}/models/diffusion_models"
 
 python - "${WAN_REPO}" "${COMFY_DIR}" <<'PY'
