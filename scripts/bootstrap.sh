@@ -20,6 +20,7 @@ fi
 
 python3 -m venv "${VENV_DIR}"
 source "${VENV_DIR}/bin/activate"
+prepare_pip_cache "${DATA_DIR}/.pip-index-url"
 python -m pip install --upgrade pip wheel
 python -m pip install -r "${PROJECT_DIR}/requirements.txt" 'soup-cli[train]' modelscope
 
