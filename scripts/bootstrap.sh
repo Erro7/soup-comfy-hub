@@ -18,11 +18,17 @@ if ! command -v ffmpeg >/dev/null; then
   fi
 fi
 
-python3 -m venv "${VENV_DIR}"
+PIP_STATE_FILE="${DATA_DIR}/.pip-index-url"
+if pip_index_changed "${PIP_STATE_FILE}"; then
+  echo "Package index changed; rebuilding the project virtual environment."
+  python3 -m venv --clear "${VENV_DIR}"
+else
+  python3 -m venv "${VENV_DIR}"
+fi
 source "${VENV_DIR}/bin/activate"
-prepare_pip_cache "${DATA_DIR}/.pip-index-url"
+prepare_pip_cache "${PIP_STATE_FILE}"
 python -m pip install --upgrade pip wheel
-python -m pip install -r "${PROJECT_DIR}/requirements.txt" modelscope
+python -m pip install -r "${PROJECT_DIR}/requirements.txt"
 if [ "${INSTALL_SOUP:-0}" = "1" ]; then
   python -m pip install 'soup-cli[train]'
 fi
@@ -55,5 +61,6 @@ if [ "${INSTALL_POSE_GALLERY:-1}" = "1" ]; then
 fi
 
 mkdir -p "${TASK_OUTPUT_DIR}" "${PROJECT_DIR}/logs" "${COMFY_INPUT_DIR}" "${COMFY_OUTPUT_DIR}"
+record_pip_environment "${PIP_STATE_FILE}"
 [ -f "${PROJECT_DIR}/.env" ] || cp "${PROJECT_DIR}/.env.example" "${PROJECT_DIR}/.env"
 echo "Bootstrap complete. Edit ${PROJECT_DIR}/.env, then run make models and make up."
