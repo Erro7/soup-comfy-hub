@@ -52,7 +52,9 @@ prepare_pip_cache "${PIP_STATE_FILE}"
 # Record immediately so an interrupted install resumes instead of clearing the
 # partially populated persistent venv again on the next container start.
 record_pip_environment "${PIP_STATE_FILE}"
-python -m pip install --upgrade pip wheel
+if [ "${UPGRADE_PIP_TOOLCHAIN:-0}" = "1" ]; then
+  python -m pip install --upgrade pip
+fi
 python -m pip install -r "${PROJECT_DIR}/requirements.txt"
 if [ "${INSTALL_SOUP:-0}" = "1" ]; then
   python -m pip install 'soup-cli[train]'
