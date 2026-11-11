@@ -1,3 +1,4 @@
+import asyncio
 import base64
 from contextlib import asynccontextmanager
 
@@ -21,7 +22,7 @@ tasks = TaskStore(settings.task_db_path)
 vram = VRAMManager(comfy)
 images = ImageRouter(settings, comfy, vram)
 videos = VideoRouter(settings, comfy, vram, tasks)
-soup = SoupRunner(settings, vram, tasks)
+soup = SoupRunner(settings, vram, tasks) if settings.enable_soup else None
 
 
 @asynccontextmanager
@@ -30,17 +31,21 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Soup-Comfy-Hub", version="2.0.0", lifespan=lifespan)
+app = FastAPI(title="Soup-Comfy-Hub", version="2.1.0", lifespan=lifespan)
 
 
 @app.get("/healthz")
 async def healthz():
+    return {"status": "ok", "service": "gateway"}
+
+
+@app.get("/readyz")
+async def readyz():
     try:
         await comfy.health()
-        comfy_status = "ok"
-    except Exception:
-        comfy_status = "unavailable"
-    return {"status": "ok", "comfyui": comfy_status}
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="ComfyUI is unavailable") from exc
+    return {"status": "ready", "comfyui": "ok", "soup_enabled": settings.enable_soup}
 
 
 @app.post("/v1/images/edits", dependencies=[Depends(require_api_key)])
@@ -71,12 +76,12 @@ async def portrait_to_video(request: PortraitVideoRequest):
             ))
             tasks.update(task["id"], progress=0.4)
             payload = request.model_copy(update={"first_frame_b64": image["image_base64"], "async_mode": False})
-            result = await videos.generate(VideoGenerationRequest(**payload.model_dump(include=set(VideoGenerationRequest.model_fields))))
+            fields = set(VideoGenerationRequest.model_fields)
+            result = await videos.generate(VideoGenerationRequest(**payload.model_dump(include=fields)))
             tasks.update(task["id"], status="succeeded", progress=1, result=result)
         except Exception as exc:
             tasks.update(task["id"], status="failed", error=str(exc))
 
-    import asyncio
     asyncio.create_task(run())
     return {"task_id": task["id"], "status": task["status"]}
 
@@ -97,10 +102,12 @@ async def get_file(filename: str):
     return FileResponse(path)
 
 
-@app.post("/v1/soup/train", dependencies=[Depends(require_api_key)])
-async def soup_train(request: SoupTrainRequest):
-    task = soup.enqueue(request)
-    return {"task_id": task["id"], "status": task["status"]}
+if settings.enable_soup:
+    @app.post("/v1/soup/train", dependencies=[Depends(require_api_key)])
+    async def soup_train(request: SoupTrainRequest):
+        assert soup is not None
+        task = soup.enqueue(request)
+        return {"task_id": task["id"], "status": task["status"]}
 
 
 def _to_b64(path: str | None) -> str:
@@ -108,13 +115,14 @@ def _to_b64(path: str | None) -> str:
 
 
 with gr.Blocks(title="Soup-Comfy-Hub") as demo:
-    gr.Markdown("# Soup-Comfy-Hub\nAPI-first image, video and Soup orchestration console.")
+    gr.Markdown("# Soup-Comfy-Hub\nAPI-first ComfyUI image and video orchestration console.")
     gr.Markdown("For authenticated production calls, use the REST API under `/v1`. This UI is intended for local debugging.")
     with gr.Tab("Image workflow"):
         gr.Markdown("Three-reference portrait workflow is available through `POST /v1/images/edits`.")
     with gr.Tab("🎬 Video workflow"):
-        gr.Markdown("Wan 2.1 I2V workflow is available through `POST /v1/videos/generations`; poll `/v1/tasks/{task_id}`.")
-    with gr.Tab("Soup"):
-        gr.Markdown("Training is queued through `POST /v1/soup/train` and shares the exclusive GPU lock.")
+        gr.Markdown("Wan 2.1 I2V is available through `POST /v1/videos/generations`; poll `/v1/tasks/{task_id}`.")
+    if settings.enable_soup:
+        with gr.Tab("Soup"):
+            gr.Markdown("Optional training is queued through `POST /v1/soup/train`.")
 
 app = gr.mount_gradio_app(app, demo, path="/ui")
