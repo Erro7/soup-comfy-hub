@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     api_key: str = "change-me"
     cluster_key: str = "change-cluster-key"
     require_cluster_key: bool = False
+    enable_soup: bool = False
     comfy_url: str = "http://127.0.0.1:8188"
     comfy_output_dir: Path = Path("/mnt/workspace/ComfyUI/output")
     comfy_input_dir: Path = Path("/mnt/workspace/ComfyUI/input")
