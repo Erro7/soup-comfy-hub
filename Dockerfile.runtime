@@ -21,6 +21,7 @@ WORKDIR /app
 COPY . .
 RUN bash scripts/bootstrap.sh \
     && rm -rf /opt/ComfyUI/models/* /root/.cache/pip /data/* \
+    && rm -f /app/.env \
     && mkdir -p /opt/ComfyUI/models /data/input /data/comfy-output /data/outputs
 
 EXPOSE 8000
