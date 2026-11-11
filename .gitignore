@@ -1,0 +1,16 @@
+.env
+.codex/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+models/
+outputs/
+logs/
+ComfyUI/
+cloudflared
+*.mp4
+*.webm
+*.mov

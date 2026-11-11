@@ -1,0 +1,14 @@
+{
+  "template_only": true,
+  "notice": "Replace this reference graph with a ComfyUI API-format export matching your installed InstantID/PuLID, IPAdapter/Redux and ControlNet node packs. Preserve the _meta.title anchors.",
+  "prompt": {
+    "1": {"class_type": "LoadImage", "inputs": {"image": "face.png"}, "_meta": {"title": "LOAD_FACE"}},
+    "2": {"class_type": "LoadImage", "inputs": {"image": "outfit.png"}, "_meta": {"title": "LOAD_OUTFIT"}},
+    "3": {"class_type": "LoadImage", "inputs": {"image": "pose.png"}, "_meta": {"title": "LOAD_POSE"}},
+    "4": {"class_type": "CLIPTextEncode", "inputs": {"text": "85mm commercial portrait", "clip": ["10", 1]}, "_meta": {"title": "PROMPT_POSITIVE"}},
+    "5": {"class_type": "CLIPTextEncode", "inputs": {"text": "low quality, distorted face", "clip": ["10", 1]}, "_meta": {"title": "PROMPT_NEGATIVE"}},
+    "10": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": "REPLACE_WITH_YOUR_PORTRAIT_MODEL.safetensors"}, "_meta": {"title": "PORTRAIT_MODEL"}},
+    "11": {"class_type": "SaveImage", "inputs": {"filename_prefix": "soup_comfy_hub/portrait", "images": ["99", 0]}, "_meta": {"title": "IMAGE_OUTPUT"}},
+    "99": {"class_type": "REPLACE_WITH_MULTI_REFERENCE_GRAPH", "inputs": {"face": ["1", 0], "outfit": ["2", 0], "pose": ["3", 0], "positive": ["4", 0], "negative": ["5", 0], "model": ["10", 0]}, "_meta": {"title": "MULTI_REFERENCE_PIPELINE"}}
+  }
+}

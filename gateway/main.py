@@ -1,0 +1,120 @@
+import base64
+from contextlib import asynccontextmanager
+
+import gradio as gr
+from fastapi import Depends, FastAPI, HTTPException
+from fastapi.responses import FileResponse
+
+from .auth import require_api_key
+from .comfy_client import ComfyClient
+from .comfy_router import ImageRouter
+from .config import get_settings
+from .schemas import ImageEditRequest, PortraitVideoRequest, SoupTrainRequest, VideoGenerationRequest
+from .soup_runner import SoupRunner
+from .task_store import TaskStore
+from .video_router import VideoRouter
+from .vram_manager import VRAMManager
+
+settings = get_settings()
+comfy = ComfyClient(settings.comfy_url, settings.comfy_timeout_seconds)
+tasks = TaskStore(settings.task_db_path)
+vram = VRAMManager(comfy)
+images = ImageRouter(settings, comfy, vram)
+videos = VideoRouter(settings, comfy, vram, tasks)
+soup = SoupRunner(settings, vram, tasks)
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    settings.task_output_dir.mkdir(parents=True, exist_ok=True)
+    yield
+
+
+app = FastAPI(title="Soup-Comfy-Hub", version="2.0.0", lifespan=lifespan)
+
+
+@app.get("/healthz")
+async def healthz():
+    try:
+        await comfy.health()
+        comfy_status = "ok"
+    except Exception:
+        comfy_status = "unavailable"
+    return {"status": "ok", "comfyui": comfy_status}
+
+
+@app.post("/v1/images/edits", dependencies=[Depends(require_api_key)])
+async def image_edits(request: ImageEditRequest):
+    return await images.generate(request)
+
+
+@app.post("/v1/videos/generations", dependencies=[Depends(require_api_key)])
+async def video_generations(request: VideoGenerationRequest):
+    if request.async_mode:
+        task = videos.enqueue(request)
+        return {"task_id": task["id"], "status": task["status"]}
+    return await videos.generate(request)
+
+
+@app.post("/v1/pipelines/portrait-to-video", dependencies=[Depends(require_api_key)])
+async def portrait_to_video(request: PortraitVideoRequest):
+    task = tasks.create("portrait_to_video")
+
+    async def run():
+        tasks.update(task["id"], status="running", progress=0.05)
+        try:
+            image = await images.generate(ImageEditRequest(
+                face_image_b64=request.face_image_b64,
+                outfit_image_b64=request.outfit_image_b64,
+                pose_image_b64=request.pose_image_b64,
+                prompt=request.portrait_prompt,
+            ))
+            tasks.update(task["id"], progress=0.4)
+            payload = request.model_copy(update={"first_frame_b64": image["image_base64"], "async_mode": False})
+            result = await videos.generate(VideoGenerationRequest(**payload.model_dump(include=set(VideoGenerationRequest.model_fields))))
+            tasks.update(task["id"], status="succeeded", progress=1, result=result)
+        except Exception as exc:
+            tasks.update(task["id"], status="failed", error=str(exc))
+
+    import asyncio
+    asyncio.create_task(run())
+    return {"task_id": task["id"], "status": task["status"]}
+
+
+@app.get("/v1/tasks/{task_id}", dependencies=[Depends(require_api_key)])
+async def get_task(task_id: str):
+    task = tasks.get(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task
+
+
+@app.get("/v1/files/{filename}", dependencies=[Depends(require_api_key)])
+async def get_file(filename: str):
+    path = (settings.task_output_dir / filename).resolve()
+    if path.parent != settings.task_output_dir.resolve() or not path.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(path)
+
+
+@app.post("/v1/soup/train", dependencies=[Depends(require_api_key)])
+async def soup_train(request: SoupTrainRequest):
+    task = soup.enqueue(request)
+    return {"task_id": task["id"], "status": task["status"]}
+
+
+def _to_b64(path: str | None) -> str:
+    return base64.b64encode(open(path, "rb").read()).decode() if path else ""
+
+
+with gr.Blocks(title="Soup-Comfy-Hub") as demo:
+    gr.Markdown("# Soup-Comfy-Hub\nAPI-first image, video and Soup orchestration console.")
+    gr.Markdown("For authenticated production calls, use the REST API under `/v1`. This UI is intended for local debugging.")
+    with gr.Tab("Image workflow"):
+        gr.Markdown("Three-reference portrait workflow is available through `POST /v1/images/edits`.")
+    with gr.Tab("🎬 Video workflow"):
+        gr.Markdown("Wan 2.1 I2V workflow is available through `POST /v1/videos/generations`; poll `/v1/tasks/{task_id}`.")
+    with gr.Tab("Soup"):
+        gr.Markdown("Training is queued through `POST /v1/soup/train` and shares the exclusive GPU lock.")
+
+app = gr.mount_gradio_app(app, demo, path="/ui")

@@ -1,0 +1,9 @@
+# Run `soup init --template chat` with the installed Soup version to regenerate
+# this file, then merge the project-specific paths below. Soup's schema evolves.
+model: Qwen/Qwen2.5-3B-Instruct
+dataset: data/seed_train.jsonl
+output_dir: outputs/portrait-prompt-adapter
+method: lora
+max_seq_length: 1024
+epochs: 3
+learning_rate: 0.0002

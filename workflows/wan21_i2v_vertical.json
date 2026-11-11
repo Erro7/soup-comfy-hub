@@ -1,0 +1,17 @@
+{
+  "prompt": {
+    "1": {"class_type": "UNETLoader", "inputs": {"unet_name": "wan2.1_i2v_720p_14B_fp8_e4m3fn.safetensors", "weight_dtype": "default"}, "_meta": {"title": "WAN_MODEL"}},
+    "2": {"class_type": "CLIPLoader", "inputs": {"clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors", "type": "wan", "device": "default"}, "_meta": {"title": "WAN_TEXT_ENCODER"}},
+    "3": {"class_type": "VAELoader", "inputs": {"vae_name": "wan_2.1_vae.safetensors"}, "_meta": {"title": "WAN_VAE"}},
+    "4": {"class_type": "CLIPVisionLoader", "inputs": {"clip_name": "clip_vision_h.safetensors"}, "_meta": {"title": "WAN_CLIP_VISION"}},
+    "5": {"class_type": "LoadImage", "inputs": {"image": "first_frame.png"}, "_meta": {"title": "LOAD_FIRST_FRAME"}},
+    "6": {"class_type": "CLIPTextEncode", "inputs": {"text": "cinematic portrait motion", "clip": ["2", 0]}, "_meta": {"title": "PROMPT_POSITIVE"}},
+    "7": {"class_type": "CLIPTextEncode", "inputs": {"text": "flicker, distortion, low quality", "clip": ["2", 0]}, "_meta": {"title": "PROMPT_NEGATIVE"}},
+    "8": {"class_type": "CLIPVisionEncode", "inputs": {"crop": "none", "clip_vision": ["4", 0], "image": ["5", 0]}, "_meta": {"title": "FIRST_FRAME_VISION"}},
+    "9": {"class_type": "WanImageToVideo", "inputs": {"width": 720, "height": 1280, "length": 81, "batch_size": 1, "positive": ["6", 0], "negative": ["7", 0], "vae": ["3", 0], "clip_vision_output": ["8", 0], "start_image": ["5", 0]}, "_meta": {"title": "VIDEO_LATENT_CONFIG"}},
+    "10": {"class_type": "ModelSamplingSD3", "inputs": {"shift": 8.0, "model": ["1", 0]}, "_meta": {"title": "WAN_SAMPLING"}},
+    "11": {"class_type": "KSampler", "inputs": {"seed": 1, "steps": 20, "cfg": 6.0, "sampler_name": "uni_pc", "scheduler": "simple", "denoise": 1.0, "model": ["10", 0], "positive": ["9", 0], "negative": ["9", 1], "latent_image": ["9", 2]}, "_meta": {"title": "WAN_KSAMPLER"}},
+    "12": {"class_type": "VAEDecode", "inputs": {"samples": ["11", 0], "vae": ["3", 0]}, "_meta": {"title": "WAN_DECODE"}},
+    "13": {"class_type": "VHS_VideoCombine", "inputs": {"frame_rate": 16, "loop_count": 0, "filename_prefix": "soup_comfy_hub/wan21", "format": "video/h264-mp4", "pingpong": false, "save_output": true, "images": ["12", 0]}, "_meta": {"title": "VIDEO_OUTPUT"}}
+  }
+}
