@@ -15,6 +15,15 @@ check_dir "${COMFY_DIR}/custom_nodes/ComfyUI_IPAdapter_plus" "IPAdapter nodes"
 if [ "${INSTALL_POSE_GALLERY:-1}" = "1" ]; then
   check_dir "${COMFY_DIR}/custom_nodes/ai-pose-gallery-zh/comfyui_plugin" "AI pose gallery zh"
 fi
+if [ "${ENABLE_SOUP:-0}" = "1" ]; then
+  if "${VENV_DIR}/bin/python" -m pip show soup-cli >/dev/null 2>&1; then
+    echo "OK   optional Soup CLI"
+  else
+    echo "MISS Soup is enabled but soup-cli is not installed"
+    fail=1
+  fi
+fi
+
 check_file "${COMFY_DIR}/models/diffusion_models/wan2.1_i2v_720p_14B_fp8_e4m3fn.safetensors" "Wan 2.1 FP8"
 check_file "${COMFY_DIR}/models/vae/wan_2.1_vae.safetensors" "Wan VAE"
 check_file "${COMFY_DIR}/models/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors" "Wan text encoder"
