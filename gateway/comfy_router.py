@@ -28,6 +28,8 @@ class ImageRouter:
             negative = find_by_title(workflow, "PROMPT_NEGATIVE", required=False)
             if negative:
                 set_first(negative, ("text", "negative_prompt"), request.negative_prompt)
+            if request.seed >= 0:
+                set_first(find_by_title(workflow, "PORTRAIT_SAMPLER"), ("seed", "noise_seed"), request.seed)
             async with self.vram.acquire(Workload.IMAGE):
                 prompt_id = await self.comfy.submit(workflow)
                 history = await self.comfy.wait_history(prompt_id)

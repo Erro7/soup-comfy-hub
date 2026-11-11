@@ -38,3 +38,9 @@ def test_template_workflow_rejected(tmp_path):
     path.write_text(json.dumps({"template_only": True, "notice": "replace me", "prompt": {}}))
     with pytest.raises(WorkflowError, match="replace me"):
         load_workflow(path)
+
+
+def test_portrait_workflow_is_runnable_baseline():
+    workflow = load_workflow(Path("workflows/multi_ref_portrait.json"))
+    titles = {node.get("_meta", {}).get("title") for node in workflow.values()}
+    assert {"LOAD_FACE", "LOAD_OUTFIT", "LOAD_POSE", "APPLY_FACE_AND_POSE", "APPLY_OUTFIT", "IMAGE_OUTPUT"} <= titles

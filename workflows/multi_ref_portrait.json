@@ -1,14 +1,21 @@
 {
-  "template_only": true,
-  "notice": "Replace this reference graph with a ComfyUI API-format export matching your installed InstantID/PuLID, IPAdapter/Redux and ControlNet node packs. Preserve the _meta.title anchors.",
   "prompt": {
-    "1": {"class_type": "LoadImage", "inputs": {"image": "face.png"}, "_meta": {"title": "LOAD_FACE"}},
-    "2": {"class_type": "LoadImage", "inputs": {"image": "outfit.png"}, "_meta": {"title": "LOAD_OUTFIT"}},
-    "3": {"class_type": "LoadImage", "inputs": {"image": "pose.png"}, "_meta": {"title": "LOAD_POSE"}},
-    "4": {"class_type": "CLIPTextEncode", "inputs": {"text": "85mm commercial portrait", "clip": ["10", 1]}, "_meta": {"title": "PROMPT_POSITIVE"}},
-    "5": {"class_type": "CLIPTextEncode", "inputs": {"text": "low quality, distorted face", "clip": ["10", 1]}, "_meta": {"title": "PROMPT_NEGATIVE"}},
-    "10": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": "REPLACE_WITH_YOUR_PORTRAIT_MODEL.safetensors"}, "_meta": {"title": "PORTRAIT_MODEL"}},
-    "11": {"class_type": "SaveImage", "inputs": {"filename_prefix": "soup_comfy_hub/portrait", "images": ["99", 0]}, "_meta": {"title": "IMAGE_OUTPUT"}},
-    "99": {"class_type": "REPLACE_WITH_MULTI_REFERENCE_GRAPH", "inputs": {"face": ["1", 0], "outfit": ["2", 0], "pose": ["3", 0], "positive": ["4", 0], "negative": ["5", 0], "model": ["10", 0]}, "_meta": {"title": "MULTI_REFERENCE_PIPELINE"}}
+    "4": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": "sd_xl_base_1.0.safetensors"}, "_meta": {"title": "PORTRAIT_MODEL"}},
+    "5": {"class_type": "EmptyLatentImage", "inputs": {"width": 768, "height": 1024, "batch_size": 1}, "_meta": {"title": "PORTRAIT_LATENT"}},
+    "11": {"class_type": "InstantIDModelLoader", "inputs": {"instantid_file": "ip-adapter.bin"}, "_meta": {"title": "INSTANTID_MODEL"}},
+    "13": {"class_type": "LoadImage", "inputs": {"image": "face.png"}, "_meta": {"title": "LOAD_FACE"}},
+    "14": {"class_type": "LoadImage", "inputs": {"image": "pose.png"}, "_meta": {"title": "LOAD_POSE"}},
+    "16": {"class_type": "ControlNetLoader", "inputs": {"control_net_name": "instantid/diffusion_pytorch_model.safetensors"}, "_meta": {"title": "INSTANTID_CONTROLNET"}},
+    "38": {"class_type": "InstantIDFaceAnalysis", "inputs": {"provider": "CPU"}, "_meta": {"title": "INSTANTID_FACE_ANALYSIS"}},
+    "39": {"class_type": "CLIPTextEncode", "inputs": {"text": "85mm commercial portrait, realistic skin texture, editorial lighting", "clip": ["4", 1]}, "_meta": {"title": "PROMPT_POSITIVE"}},
+    "40": {"class_type": "CLIPTextEncode", "inputs": {"text": "low quality, distorted face, extra fingers", "clip": ["4", 1]}, "_meta": {"title": "PROMPT_NEGATIVE"}},
+    "60": {"class_type": "ApplyInstantID", "inputs": {"weight": 0.8, "start_at": 0.0, "end_at": 1.0, "instantid": ["11", 0], "insightface": ["38", 0], "control_net": ["16", 0], "image": ["13", 0], "model": ["4", 0], "positive": ["39", 0], "negative": ["40", 0], "image_kps": ["14", 0]}, "_meta": {"title": "APPLY_FACE_AND_POSE"}},
+    "68": {"class_type": "IPAdapterModelLoader", "inputs": {"ipadapter_file": "ip-adapter-plus_sdxl_vit-h.safetensors"}, "_meta": {"title": "IPADAPTER_MODEL"}},
+    "70": {"class_type": "CLIPVisionLoader", "inputs": {"clip_name": "CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors"}, "_meta": {"title": "IPADAPTER_CLIP_VISION"}},
+    "71": {"class_type": "LoadImage", "inputs": {"image": "outfit.png"}, "_meta": {"title": "LOAD_OUTFIT"}},
+    "72": {"class_type": "IPAdapterAdvanced", "inputs": {"weight": 0.5, "weight_type": "linear", "combine_embeds": "concat", "start_at": 0.0, "end_at": 1.0, "embeds_scaling": "V only", "model": ["60", 0], "ipadapter": ["68", 0], "image": ["71", 0], "clip_vision": ["70", 0]}, "_meta": {"title": "APPLY_OUTFIT"}},
+    "3": {"class_type": "KSampler", "inputs": {"seed": 1, "steps": 30, "cfg": 4.5, "sampler_name": "ddpm", "scheduler": "karras", "denoise": 1.0, "model": ["72", 0], "positive": ["60", 1], "negative": ["60", 2], "latent_image": ["5", 0]}, "_meta": {"title": "PORTRAIT_SAMPLER"}},
+    "8": {"class_type": "VAEDecode", "inputs": {"samples": ["3", 0], "vae": ["4", 2]}, "_meta": {"title": "PORTRAIT_DECODE"}},
+    "15": {"class_type": "SaveImage", "inputs": {"filename_prefix": "soup_comfy_hub/portrait", "images": ["8", 0]}, "_meta": {"title": "IMAGE_OUTPUT"}}
   }
 }

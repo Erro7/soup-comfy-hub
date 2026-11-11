@@ -1,0 +1,23 @@
+services:
+  runtime:
+    build:
+      context: .
+      dockerfile: Dockerfile.runtime
+    env_file: .env
+    environment:
+      PROJECT_DIR: /app
+      DATA_DIR: /data
+      COMFY_DIR: /data/ComfyUI
+      VENV_DIR: /data/venv
+      GATEWAY_HOST: 0.0.0.0
+      GATEWAY_PORT: 8000
+      AUTO_DOWNLOAD_MODELS: ${AUTO_DOWNLOAD_MODELS:-0}
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - soup-comfy-data:/data
+    gpus: all
+    restart: unless-stopped
+
+volumes:
+  soup-comfy-data:

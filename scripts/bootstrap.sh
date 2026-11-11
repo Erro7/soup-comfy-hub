@@ -1,16 +1,9 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-WORKSPACE="${WORKSPACE:-/mnt/workspace}"
-PROJECT_DIR="${PROJECT_DIR:-${WORKSPACE}/soup-comfy-hub}"
-COMFY_DIR="${COMFY_DIR:-${WORKSPACE}/ComfyUI}"
-VENV_DIR="${VENV_DIR:-${WORKSPACE}/venv}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/runtime_env.sh"
 
-if [ -f "${PROJECT_DIR}/.env" ]; then
-  set -a
-  source "${PROJECT_DIR}/.env"
-  set +a
-fi
 source "${PROJECT_DIR}/scripts/pip_mirror.sh"
 configure_pip_mirror
 
@@ -51,7 +44,9 @@ install_node() {
 
 install_node https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git ComfyUI-VideoHelperSuite
 install_node https://github.com/city96/ComfyUI-GGUF.git ComfyUI-GGUF
+install_node https://github.com/cubiq/ComfyUI_InstantID.git ComfyUI_InstantID
+install_node https://github.com/cubiq/ComfyUI_IPAdapter_plus.git ComfyUI_IPAdapter_plus
 
-mkdir -p "${PROJECT_DIR}/outputs" "${PROJECT_DIR}/logs" "${COMFY_DIR}/input" "${COMFY_DIR}/output"
+mkdir -p "${TASK_OUTPUT_DIR}" "${PROJECT_DIR}/logs" "${COMFY_INPUT_DIR}" "${COMFY_OUTPUT_DIR}"
 [ -f "${PROJECT_DIR}/.env" ] || cp "${PROJECT_DIR}/.env.example" "${PROJECT_DIR}/.env"
 echo "Bootstrap complete. Edit ${PROJECT_DIR}/.env, then run make models and make up."

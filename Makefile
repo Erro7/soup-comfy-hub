@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: init models up down test lint
+.PHONY: init models up down doctor smoke test lint
 
 init:
 	bash scripts/bootstrap.sh
@@ -10,6 +10,12 @@ models:
 
 up:
 	bash scripts/start_services.sh
+
+doctor:
+	bash scripts/doctor.sh
+
+smoke:
+	bash scripts/smoke_test.sh
 
 down:
 	@if [ -f /mnt/workspace/soup-comfy-hub/logs/services.pid ]; then kill "$$(cat /mnt/workspace/soup-comfy-hub/logs/services.pid)" 2>/dev/null || true; fi

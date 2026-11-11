@@ -16,7 +16,7 @@ Single-GPU orchestration for ComfyUI image/video workflows and Soup fine-tuning,
 
 `workflows/wan21_i2v_vertical.json` is an API-format native Wan 2.1 + VideoHelperSuite graph. Its model filename must match the quant you install.
 
-The multi-reference portrait and Phantom/VACE graphs are **explicit templates**, not fake runnable graphs. InstantID/PuLID, Redux/IPAdapter, ControlNet, Phantom, and VACE packs expose version-specific node names and inputs. Export your tested graph from ComfyUI using **Save (API Format)** and replace the corresponding JSON while preserving the `_meta.title` anchors. The gateway intentionally rejects template-only graphs with a clear error.
+The included multi-reference portrait baseline uses SDXL + InstantID + IPAdapter: face identity is injected through InstantID, the pose image is connected to `image_kps`, and the outfit image is applied through IPAdapter. The Phantom/VACE graph remains an optional template because it is not used by the default portrait-to-video pipeline.
 
 Required image anchors: `LOAD_FACE`, `LOAD_OUTFIT`, `LOAD_POSE`, `PROMPT_POSITIVE`; optional `PROMPT_NEGATIVE`.
 
@@ -32,9 +32,26 @@ cp .env.example .env
 # Edit API_KEY, CLUSTER_KEY, and paths in .env
 make models
 # For a quantized diffusion model:
-WAN_QUANT_REPO=YOUR_TRUSTED_MODELSCOPE_REPO make models
 make up
 ```
+
+Before `make up`, run `make doctor`. After startup, run `make smoke`.
+
+### Runtime portability
+
+The same runtime supports ModelScope Notebook and NVIDIA Docker. Paths are derived from the checkout by default and can be overridden with `DATA_DIR`, `COMFY_DIR`, `VENV_DIR`, and `PROJECT_DIR`.
+
+```bash
+docker compose build
+docker compose run --rm runtime bash scripts/download_models.sh
+docker compose up -d
+```
+
+For a literal first-run download, set `AUTO_DOWNLOAD_MODELS=1`; expect a large download and a long initial startup. Keeping it off is safer for restarts and metered storage.
+
+The root `Dockerfile` is the lightweight ModelScope Studio reverse proxy and listens on `0.0.0.0:7860`. Configure Studio secrets `GATEWAY_PUBLIC_URL`, `API_KEY`, `CLUSTER_KEY`, and `STUDIO_API_KEY`. Studio clients authenticate with `X-API-Key` because ModelScope reserves the standard `Authorization` header.
+
+Cloudflared is optional. It starts only when both `ENABLE_CLOUDFLARED=1` and `CLOUDFLARE_TUNNEL_TOKEN` are set.
 
 ### PyPI mirror selection
 
