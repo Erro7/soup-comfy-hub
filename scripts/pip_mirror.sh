@@ -17,25 +17,15 @@ configure_pip_mirror() {
 
   if [[ "${mirror}" == "auto" ]]; then
     case "${timezone}" in
-      Asia/Shanghai|Asia/Chongqing|Asia/Harbin|Asia/Urumqi)
-        mirror="tsinghua"
-        ;;
-      *)
-        mirror="pypi"
-        ;;
+      Asia/Shanghai|Asia/Chongqing|Asia/Harbin|Asia/Urumqi) mirror="tsinghua" ;;
+      *) mirror="pypi" ;;
     esac
   fi
 
   case "${mirror}" in
-    tsinghua|tuna)
-      export PIP_INDEX_URL="https://pypi.tuna.tsinghua.edu.cn/simple"
-      ;;
-    aliyun|alibaba)
-      export PIP_INDEX_URL="https://mirrors.aliyun.com/pypi/simple/"
-      ;;
-    pypi|official|off)
-      export PIP_INDEX_URL="https://pypi.org/simple"
-      ;;
+    tsinghua|tuna) export PIP_INDEX_URL="https://pypi.tuna.tsinghua.edu.cn/simple" ;;
+    aliyun|alibaba) export PIP_INDEX_URL="https://mirrors.aliyun.com/pypi/simple/" ;;
+    pypi|official|off) export PIP_INDEX_URL="https://pypi.org/simple" ;;
     *)
       echo "Unsupported PIP_MIRROR=${mirror}; use auto, tsinghua, aliyun, or pypi" >&2
       return 2
@@ -44,27 +34,27 @@ configure_pip_mirror() {
   echo "Selected pip index: ${PIP_INDEX_URL} (timezone=${timezone:-unknown})"
 }
 
-# pip's cache is shared across indexes. Purge it only on the first managed run
-# or when the selected index changes, so cached responses/artifacts from one
-# cloud mirror cannot affect another.
+pip_environment_signature() {
+  printf 'venv-v2:%s' "${PIP_INDEX_URL}"
+}
+
+pip_index_changed() {
+  local state_file="${1:?pip mirror state file is required}"
+  local previous=""
+  [[ -r "${state_file}" ]] && previous="$(<"${state_file}")"
+  [[ "${previous}" != "$(pip_environment_signature)" ]]
+}
+
 prepare_pip_cache() {
   local state_file="${1:?pip mirror state file is required}"
-  local previous_index=""
-
-  if [[ -r "${state_file}" ]]; then
-    previous_index="$(<"${state_file}")"
-  fi
-
-  if [[ "${previous_index}" != "${PIP_INDEX_URL}" ]]; then
-    if [[ -n "${previous_index}" ]]; then
-      echo "pip index changed: ${previous_index} -> ${PIP_INDEX_URL}"
-    else
-      echo "Initializing pip index state for ${PIP_INDEX_URL}"
-    fi
-    echo "Clearing pip cache before using the selected index..."
+  if pip_index_changed "${state_file}"; then
+    echo "Clearing pip cache for the new package index..."
     python -m pip cache purge >/dev/null 2>&1 || true
   fi
+}
 
+record_pip_environment() {
+  local state_file="${1:?pip mirror state file is required}"
   mkdir -p "$(dirname "${state_file}")"
-  printf '%s\n' "${PIP_INDEX_URL}" > "${state_file}"
+  printf '%s\n' "$(pip_environment_signature)" > "${state_file}"
 }
