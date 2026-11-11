@@ -36,6 +36,21 @@ WAN_QUANT_REPO=YOUR_TRUSTED_MODELSCOPE_REPO make models
 make up
 ```
 
+### PyPI mirror selection
+
+`make init` detects the timezone. Mainland-China zones automatically use the
+Tsinghua PyPI mirror; other zones use official PyPI. Override it at any time:
+
+```bash
+PIP_MIRROR=tsinghua make init  # Tsinghua TUNA
+PIP_MIRROR=aliyun make init    # Alibaba Cloud
+PIP_MIRROR=pypi make init      # official PyPI
+PIP_INDEX_URL=https://example.com/simple make init  # custom index in auto mode
+```
+
+For Docker builds, pass `--build-arg PIP_MIRROR=tsinghua`. Mirror selection is
+process-local and does not rewrite the user's global `pip.conf`.
+
 The gateway binds to `127.0.0.1:8000`; Cloudflare should be the only public ingress. ComfyUI binds to loopback and is never exposed directly.
 
 ## API example

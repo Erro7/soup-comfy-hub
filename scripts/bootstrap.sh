@@ -6,6 +6,14 @@ PROJECT_DIR="${PROJECT_DIR:-${WORKSPACE}/soup-comfy-hub}"
 COMFY_DIR="${COMFY_DIR:-${WORKSPACE}/ComfyUI}"
 VENV_DIR="${VENV_DIR:-${WORKSPACE}/venv}"
 
+if [ -f "${PROJECT_DIR}/.env" ]; then
+  set -a
+  source "${PROJECT_DIR}/.env"
+  set +a
+fi
+source "${PROJECT_DIR}/scripts/pip_mirror.sh"
+configure_pip_mirror
+
 command -v git >/dev/null || { echo "git is required" >&2; exit 1; }
 command -v python3 >/dev/null || { echo "python3 is required" >&2; exit 1; }
 if ! command -v ffmpeg >/dev/null; then
