@@ -3,21 +3,32 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.runtime
+      args:
+        PIP_MIRROR: ${PIP_MIRROR:-auto}
+        INSTALL_POSE_GALLERY: ${INSTALL_POSE_GALLERY:-1}
+        INSTALL_SOUP: ${INSTALL_SOUP:-0}
     env_file: .env
     environment:
       PROJECT_DIR: /app
       DATA_DIR: /data
-      COMFY_DIR: /data/ComfyUI
-      VENV_DIR: /data/venv
+      COMFY_DIR: /opt/ComfyUI
+      VENV_DIR: /opt/venv
+      COMFY_INPUT_DIR: /data/input
+      COMFY_OUTPUT_DIR: /data/comfy-output
+      TASK_OUTPUT_DIR: /data/outputs
+      TASK_DB_PATH: /data/outputs/tasks.sqlite3
       GATEWAY_HOST: 0.0.0.0
       GATEWAY_PORT: 8000
+      ENABLE_SOUP: ${ENABLE_SOUP:-0}
       AUTO_DOWNLOAD_MODELS: ${AUTO_DOWNLOAD_MODELS:-0}
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
+      - soup-comfy-models:/opt/ComfyUI/models
       - soup-comfy-data:/data
     gpus: all
     restart: unless-stopped
 
 volumes:
+  soup-comfy-models:
   soup-comfy-data:
