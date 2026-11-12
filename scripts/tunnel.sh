@@ -78,6 +78,7 @@ login_tunnel() {
     echo "Login completed without ${CF_HOME}/cert.pem; verify the browser authorization flow." >&2
     exit 1
   }
+  chmod 0600 "${CF_HOME}/cert.pem"
 }
 
 tunnel_id() {
