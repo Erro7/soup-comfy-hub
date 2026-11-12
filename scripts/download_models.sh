@@ -14,10 +14,17 @@ runtime_require_comfy
 mkdir -p "${MODEL_CACHE_ROOT}"
 
 MS_PYTHON=""
-if python3 -c 'import modelscope' >/dev/null 2>&1; then
-  MS_PYTHON="$(command -v python3)"
-  echo "Using ModelScope preinstalled by the Notebook image: ${MS_PYTHON}"
-else
+for candidate in python python3 /opt/conda/bin/python; do
+  resolved="$(command -v "${candidate}" 2>/dev/null || true)"
+  [ -n "${resolved}" ] || continue
+  if "${resolved}" -c 'import modelscope' >/dev/null 2>&1; then
+    MS_PYTHON="${resolved}"
+    echo "Using ModelScope preinstalled by the Notebook image: ${MS_PYTHON}"
+    break
+  fi
+done
+
+if [ -z "${MS_PYTHON}" ]; then
   runtime_activate_venv
   if ! python -c 'import modelscope' >/dev/null 2>&1; then
     MODELSCOPE_PIP_INDEX_URL="${MODELSCOPE_PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}"
