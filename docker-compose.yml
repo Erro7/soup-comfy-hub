@@ -5,8 +5,9 @@ services:
       dockerfile: Dockerfile.runtime
       args:
         PIP_MIRROR: ${PIP_MIRROR:-auto}
-        INSTALL_POSE_GALLERY: ${INSTALL_POSE_GALLERY:-1}
+        INSTALL_POSE_GALLERY: ${INSTALL_POSE_GALLERY:-0}
         INSTALL_SOUP: ${INSTALL_SOUP:-0}
+        INSTALL_GRADIO_UI: ${INSTALL_GRADIO_UI:-0}
         GITHUB_MIRROR_PREFIX: ${GITHUB_MIRROR_PREFIX:-auto}
     env_file: .env
     environment:
@@ -21,6 +22,7 @@ services:
       GATEWAY_HOST: 0.0.0.0
       GATEWAY_PORT: 8000
       ENABLE_SOUP: ${ENABLE_SOUP:-0}
+      ENABLE_GRADIO_UI: ${ENABLE_GRADIO_UI:-0}
       AUTO_DOWNLOAD_MODELS: ${AUTO_DOWNLOAD_MODELS:-0}
     ports:
       - "127.0.0.1:8000:8000"
