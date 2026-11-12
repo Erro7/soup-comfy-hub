@@ -4,7 +4,7 @@ This file is the source of truth for staged delivery. A phase is marked complete
 
 | Phase | Scope | Status | Acceptance |
 |---:|---|---|---|
-| 1 | Portable paths, platform detection, download helper, standalone cloudflared tool | In progress | Works without root from persistent, user, or project storage; offline regression tests pass |
+| 1 | Portable paths, platform detection, download helper, standalone cloudflared tool | Complete | Works without root from persistent, user, or project storage; offline regression tests pass |
 | 2 | Flattened shell contract for Bash/zsh, OMZ, pip, npm, ModelScope and tools | Pending | One environment and cache contract across supported platforms |
 | 3 | Persistent Python/venv lifecycle | Pending | Container restart reuses the same environment without reinstalling |
 | 4 | Fast, resilient package and Git source selection | Pending | Mirror changes are explicit, recoverable, and do not corrupt caches |
@@ -33,7 +33,14 @@ This file is the source of truth for staged delivery. A phase is marked complete
 
 | Date | Phase | Result |
 |---|---:|---|
-| 2026-11-12 | 1 | Started: portable tool foundation and tracking established |
+| 2026-11-12 | 1 | Complete: path/platform/download libraries, standalone token-based cloudflared CLI, Make compatibility aliases, shared-shell PATH integration, and offline regression added |
+
+## Phase 1 verification
+
+- `bash -n` passed for all new and modified shell entrypoints.
+- `tests/test_tools.sh` passed with a fake cloudflared binary and no network access.
+- Status output was verified not to reveal the configured Tunnel token.
+- The run contract was verified as `tunnel --no-autoupdate run --token <hidden>`.
 
 ## Git policy
 
