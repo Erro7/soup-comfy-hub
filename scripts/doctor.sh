@@ -9,7 +9,7 @@ check_dir() { if [ -d "$1" ]; then echo "OK   $2"; else echo "MISS $2 -> $1"; fa
 
 check_file "${VENV_DIR}/bin/python" "Python venv"
 if [ -x "${VENV_DIR}/bin/python" ]; then
-  if "${VENV_DIR}/bin/python" -c 'import fastapi, httpx, pydantic_settings' >/dev/null 2>&1; then
+  if "${VENV_DIR}/bin/python" -c 'import fastapi, httpx, pydantic_settings, uvicorn' >/dev/null 2>&1; then
     echo "OK   Gateway Python dependencies"
     if "${VENV_DIR}/bin/python" -c 'import torch' >/dev/null 2>&1; then
       "${VENV_DIR}/bin/python" - <<'PY'
