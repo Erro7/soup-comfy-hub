@@ -36,11 +36,12 @@ All commands resolve the same `DATA_DIR`, `VENV_DIR`, `COMFY_DIR`, cache, logs, 
 | `make up` | Start services only; never installs packages. |
 | `make down` | Stop only the recorded supervisor PID; no broad `pkill`. |
 | `make restart/status/logs/smoke` | Operate and verify the same service instance and persistent paths. |
-| `make shell-init` | Explicitly install/configure persistent zsh and Oh My Zsh. |
+| `make shell-init` | Initialize persistent Bash/zsh, package-manager configs and optional Oh My Zsh; venv is not required. |
 | `make cloudflared-install` | Install the standalone CLI into writable persistent storage; no root or image rebuild. |
 | `make cloudflared-status` | Show the resolved CLI/path/token state without exposing the token. |
 | `make shell` | Enter persistent zsh by default and activate the exact same project venv; never installs. |
-| `make shell CMD=...` | Run `enter/init/status/env/cache/cache-clean/doctor/update/help` through one shell command surface. |
+| `make shell CMD=...` | Run `enter/init/run/status/env/cache/cache-clean/doctor/update/help` through one shell command surface. |
+| `make shell CMD=run SHELL_COMMAND='...'` | Run one command with the same managed PATH, package configs, caches and optional venv. |
 | `make test/lint` | Run developer tools through the shared project venv. |
 
 ## Notebook quick start
@@ -69,6 +70,8 @@ docker compose run --rm runtime bash scripts/download_models.sh
 docker compose up -d
 curl -fsS http://127.0.0.1:8000/readyz
 ```
+
+The flattened shell is independent from ComfyUI and the Python venv. `make shell-init` creates project-scoped pip/npm configuration, persistent histories, cache paths and shared Bash/zsh exports first; when a project venv later exists it is activated automatically. It never writes global pip or npm configuration.
 
 The gateway starts only after ComfyUI answers its health endpoint. `/healthz` checks the gateway process; `/readyz` verifies the usable API-to-ComfyUI path.
 
