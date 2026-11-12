@@ -135,6 +135,38 @@ process-local and does not rewrite the user's global `pip.conf`.
 
 The gateway binds to `127.0.0.1:8000`; Cloudflare should be the only public ingress. ComfyUI binds to loopback and is never exposed directly.
 
+## Selective model downloads
+
+Model downloads are resumable and use the ModelScope client preinstalled by supported Notebook images when available.
+
+```bash
+make models-image
+MODEL_PROFILE=image make doctor
+
+make models-video
+MODEL_PROFILE=video make doctor
+
+make models                 # image + video
+MODEL_PROFILE=all make doctor
+```
+
+Download one exact file from any ModelScope repository:
+
+```bash
+make models-custom \
+  MODEL_ID=organization/repository \
+  MODEL_FILE=path/to/model.safetensors \
+  MODEL_DIR=diffusion_models \
+  MODEL_REVISION=master
+
+MODEL_PROFILE=custom \
+MODEL_FILE=path/to/model.safetensors \
+MODEL_DIR=diffusion_models \
+make doctor
+```
+
+`MODEL_DIR` is relative to `ComfyUI/models`, for example `checkpoints`, `diffusion_models`, `vae`, `loras`, or `controlnet`. Custom downloads reject absolute paths, parent traversal, and glob patterns.
+
 ## API example
 
 ```bash
