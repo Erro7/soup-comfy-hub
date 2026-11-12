@@ -29,6 +29,51 @@ resolve_github_url() {
   printf '%s%s' "${prefix}" "${url}"
 }
 
+GITHUB_ACCELERATOR_FAILED=0
+
+sync_repository() {
+  local repo="$1" target="$2"
+  local source_url
+  source_url="$(resolve_github_url "${repo}")"
+  if [ "${GITHUB_ACCELERATOR_FAILED}" = "1" ]; then
+    source_url="${repo}"
+  fi
+
+  if [ -d "${target}/.git" ]; then
+    git -C "${target}" remote set-url origin "${source_url}"
+    if ! git -C "${target}" pull --ff-only; then
+      if [ "${source_url}" = "${repo}" ]; then
+        return 1
+      fi
+      echo "GitHub accelerator failed; retrying direct: ${repo}" >&2
+      GITHUB_ACCELERATOR_FAILED=1
+      git -C "${target}" remote set-url origin "${repo}"
+      git -C "${target}" pull --ff-only
+    fi
+    return
+  fi
+
+  if [ -e "${target}" ]; then
+    if [ -d "${target}" ] && [ -z "$(find "${target}" -mindepth 1 -maxdepth 1 -print -quit)" ]; then
+      rmdir "${target}"
+    else
+      echo "Cannot clone into non-empty partial directory: ${target}" >&2
+      return 1
+    fi
+  fi
+
+  echo "Cloning ${source_url}"
+  if ! git clone --depth 1 "${source_url}" "${target}"; then
+    if [ "${source_url}" = "${repo}" ]; then
+      return 1
+    fi
+    [ ! -d "${target}" ] || rmdir "${target}" 2>/dev/null || true
+    echo "GitHub accelerator failed; retrying direct: ${repo}" >&2
+    GITHUB_ACCELERATOR_FAILED=1
+    git clone --depth 1 "${repo}" "${target}"
+  fi
+}
+
 command -v git >/dev/null || { echo "git is required" >&2; exit 1; }
 command -v python3 >/dev/null || { echo "python3 is required" >&2; exit 1; }
 if ! command -v ffmpeg >/dev/null; then
@@ -63,26 +108,12 @@ if [ "${INSTALL_SOUP:-0}" = "1" ]; then
   python -m pip install 'soup-cli[train]'
 fi
 
-COMFY_REPO="$(resolve_github_url https://github.com/Comfy-Org/ComfyUI.git)"
-echo "ComfyUI source: ${COMFY_REPO}"
-if [ ! -d "${COMFY_DIR}/.git" ]; then
-  git clone --depth 1 "${COMFY_REPO}" "${COMFY_DIR}"
-else
-  git -C "${COMFY_DIR}" remote set-url origin "${COMFY_REPO}"
-  git -C "${COMFY_DIR}" pull --ff-only
-fi
+sync_repository https://github.com/Comfy-Org/ComfyUI.git "${COMFY_DIR}"
 python -m pip install -r "${COMFY_DIR}/requirements.txt"
 
 install_node() {
   local repo="$1" name="$2"
-  local source_url
-  source_url="$(resolve_github_url "${repo}")"
-  if [ ! -d "${COMFY_DIR}/custom_nodes/${name}/.git" ]; then
-    git clone --depth 1 "${source_url}" "${COMFY_DIR}/custom_nodes/${name}"
-  else
-    git -C "${COMFY_DIR}/custom_nodes/${name}" remote set-url origin "${source_url}"
-    git -C "${COMFY_DIR}/custom_nodes/${name}" pull --ff-only
-  fi
+  sync_repository "${repo}" "${COMFY_DIR}/custom_nodes/${name}"
   if [ -f "${COMFY_DIR}/custom_nodes/${name}/requirements.txt" ]; then
     python -m pip install -r "${COMFY_DIR}/custom_nodes/${name}/requirements.txt"
   fi
