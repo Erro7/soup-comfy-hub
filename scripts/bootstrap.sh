@@ -56,6 +56,9 @@ if [ "${UPGRADE_PIP_TOOLCHAIN:-0}" = "1" ]; then
   python -m pip install --upgrade pip
 fi
 python -m pip install -r "${PROJECT_DIR}/requirements.txt"
+if [ "${INSTALL_GRADIO_UI:-0}" = "1" ]; then
+  python -m pip install -r "${PROJECT_DIR}/requirements-ui.txt"
+fi
 if [ "${INSTALL_SOUP:-0}" = "1" ]; then
   python -m pip install 'soup-cli[train]'
 fi
@@ -89,10 +92,11 @@ install_node https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git ComfyUI
 install_node https://github.com/city96/ComfyUI-GGUF.git ComfyUI-GGUF
 install_node https://github.com/cubiq/ComfyUI_InstantID.git ComfyUI_InstantID
 install_node https://github.com/cubiq/ComfyUI_IPAdapter_plus.git ComfyUI_IPAdapter_plus
-if [ "${INSTALL_POSE_GALLERY:-1}" = "1" ]; then
+if [ "${INSTALL_POSE_GALLERY:-0}" = "1" ]; then
   install_node https://github.com/anhao/ai-pose-gallery-zh.git ai-pose-gallery-zh
 fi
 
 mkdir -p "${TASK_OUTPUT_DIR}" "${PROJECT_DIR}/logs" "${COMFY_INPUT_DIR}" "${COMFY_OUTPUT_DIR}"
+touch "${DATA_DIR}/.runtime-ready"
 [ -f "${PROJECT_DIR}/.env" ] || cp "${PROJECT_DIR}/.env.example" "${PROJECT_DIR}/.env"
-echo "Bootstrap complete. Edit ${PROJECT_DIR}/.env, then run make models and make up."
+echo "Persistent runtime ready at ${DATA_DIR}. Edit ${PROJECT_DIR}/.env, then run make models and make up."
