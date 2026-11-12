@@ -5,7 +5,7 @@ This file is the source of truth for staged delivery. A phase is marked complete
 | Phase | Scope | Status | Acceptance |
 |---:|---|---|---|
 | 1 | Portable paths, platform detection, download helper, standalone cloudflared tool | Complete | Works without root from persistent, user, or project storage; offline regression tests pass |
-| 2 | Flattened shell contract for Bash/zsh, OMZ, pip, npm, ModelScope and tools | Pending | One environment and cache contract across supported platforms |
+| 2 | Flattened shell contract for Bash/zsh, OMZ, pip, npm, ModelScope and tools | Complete | One environment and cache contract across supported platforms |
 | 3 | Persistent Python/venv lifecycle | Pending | Container restart reuses the same environment without reinstalling |
 | 4 | Fast, resilient package and Git source selection | Pending | Mirror changes are explicit, recoverable, and do not corrupt caches |
 | 5 | ComfyUI core installation profiles | Pending | Minimal API profile starts without optional template/media packages |
@@ -33,7 +33,7 @@ This file is the source of truth for staged delivery. A phase is marked complete
 
 | Date | Phase | Result |
 |---|---:|---|
-| 2026-11-12 | 1 | Complete: path/platform/download libraries, standalone token-based cloudflared CLI, Make compatibility aliases, shared-shell PATH integration, and offline regression added |
+| 2026-11-12 | 2 | Complete: venv-independent Bash/zsh initialization, project-scoped pip/npm configs, persistent package/model caches, optional OMZ, managed command execution and offline regression |\n| 2026-11-12 | 1 | Complete: path/platform/download libraries, standalone token-based cloudflared CLI, Make compatibility aliases, shared-shell PATH integration, and offline regression added |
 
 ## Phase 1 verification
 
@@ -41,6 +41,13 @@ This file is the source of truth for staged delivery. A phase is marked complete
 - `tests/test_tools.sh` passed with a fake cloudflared binary and no network access.
 - Status output was verified not to reveal the configured Tunnel token.
 - The run contract was verified as `tunnel --no-autoupdate run --token <hidden>`.
+
+## Phase 2 verification
+
+- Shell initialization passed with no project venv present.
+- pip and npm configuration was verified under the persistent shell directory.
+- Managed command execution inherited the resolved tool environment.
+- Phase 1 and Phase 2 offline shell regressions passed together.
 
 ## Git policy
 
