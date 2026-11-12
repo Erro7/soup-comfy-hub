@@ -127,13 +127,13 @@ tunnel-login:
 	bash scripts/tunnel.sh login
 
 tunnel-create:
-	CLOUDFLARE_TUNNEL_NAME="$(TUNNEL_NAME)" bash scripts/tunnel.sh create
+	bash scripts/tunnel.sh create
 
 tunnel-setup:
-	CLOUDFLARE_TUNNEL_NAME="$(TUNNEL_NAME)" CLOUDFLARE_TUNNEL_HOSTNAME="$(TUNNEL_HOSTNAME)" CLOUDFLARE_TUNNEL_SERVICE="$(TUNNEL_SERVICE)" bash scripts/tunnel.sh setup
+	bash scripts/tunnel.sh setup
 
 tunnel-route:
-	CLOUDFLARE_TUNNEL_NAME="$(TUNNEL_NAME)" CLOUDFLARE_TUNNEL_HOSTNAME="$(TUNNEL_HOSTNAME)" bash scripts/tunnel.sh route
+	bash scripts/tunnel.sh route
 
 tunnel-validate:
 	bash scripts/tunnel.sh validate
@@ -145,7 +145,7 @@ tunnel-list:
 	bash scripts/tunnel.sh list
 
 tunnel-info:
-	CLOUDFLARE_TUNNEL_NAME="$(TUNNEL_NAME)" bash scripts/tunnel.sh info
+	bash scripts/tunnel.sh info
 
 tunnel-status:
 	bash scripts/tunnel.sh status
