@@ -10,8 +10,8 @@ API-first single-GPU runtime for ComfyUI image/video workflows. ComfyUI and the 
 - `GET /v1/tasks/{task_id}` and authenticated output downloads.
 - Optional `POST /v1/soup/train`: registered only when `ENABLE_SOUP=1` and Soup was installed.
 - One exclusive GPU lock across image, video, and training; ComfyUI `/free` is called at workload transitions.
-- Local Gradio status console at `/ui` and a lightweight Studio proxy.
-- Chinese AI pose/costume/portrait gallery nodes from `anhao/ai-pose-gallery-zh`.
+- Optional Gradio status console at `/ui`; disabled in the default API runtime.
+- Optional Chinese pose gallery; disabled by default because its offline assets are large.
 
 ## Important workflow status
 
@@ -28,12 +28,12 @@ Required video anchors: `LOAD_FIRST_FRAME`, `PROMPT_POSITIVE`, `PROMPT_NEGATIVE`
 ```bash
 git clone YOUR_REPOSITORY_URL /mnt/workspace/soup-comfy-hub
 cd /mnt/workspace/soup-comfy-hub
-make init
 cp .env.example .env
-# Edit API_KEY, CLUSTER_KEY, and paths in .env
-make models
-# For a quantized diffusion model:
-make up
+# Edit API_KEY and paths once.
+make init      # one-time persistent environment
+make models    # one-time/resumable model download
+make doctor
+make up        # every later container start
 ```
 
 Before `make up`, run `make doctor`. After startup, run `make smoke`.
@@ -58,13 +58,21 @@ The root `Dockerfile` is the lightweight ModelScope Studio reverse proxy and lis
 
 Cloudflared is optional. It starts only when both `ENABLE_CLOUDFLARED=1` and `CLOUDFLARE_TUNNEL_TOKEN` are set.
 
+### Persistent API runtime
+
+The default installation contains only ComfyUI and FastAPI dependencies. The Notebook venv, ComfyUI checkout, pip cache, models, task database, and outputs live under `/mnt/workspace/soup-comfy-data`. Run `make init` once; subsequent container starts use `make up` and never install packages.
+
+### Optional Gradio UI
+
+Gradio is not required by any REST endpoint. Enable it only when needed with `INSTALL_GRADIO_UI=1 make init` and `ENABLE_GRADIO_UI=1`.
+
 ### Optional Soup
 
 Soup is disabled by default and is not needed for image or video APIs. In Notebook mode, install and enable it with `INSTALL_SOUP=1 make init` plus `ENABLE_SOUP=1`. For Docker, set both values before `docker compose build`; enabling Soup at runtime without building it into the image will fail `make doctor`.
 
 ### Pose gallery plugin
 
-Bootstrap installs [`anhao/ai-pose-gallery-zh`](https://github.com/anhao/ai-pose-gallery-zh) into ComfyUI `custom_nodes` by default. It provides pose, costume, portrait and three-in-one recipe nodes. The repository includes a large offline image library, so the first clone requires roughly 1.1 GB in addition to model weights. Set `INSTALL_POSE_GALLERY=0` only when building a minimal runtime. The gallery contains optional 18+ reference categories; its own safe mode and source-specific image licenses still apply.
+Bootstrap installs [`anhao/ai-pose-gallery-zh`](https://github.com/anhao/ai-pose-gallery-zh) only when `INSTALL_POSE_GALLERY=1`. It provides pose, costume, portrait and three-in-one recipe nodes. The repository includes a large offline image library, so the first clone requires roughly 1.1 GB in addition to model weights. Keep `INSTALL_POSE_GALLERY=0` for the minimal API runtime. The gallery contains optional 18+ reference categories; its own safe mode and source-specific image licenses still apply.
 
 ### PyPI mirror selection
 
