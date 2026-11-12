@@ -14,7 +14,18 @@ ZDOTDIR="${ZDOTDIR:-${SHELL_HOME}/zsh}"
 ZSH_RC="${ZDOTDIR}/.zshrc"
 PLATFORM_FILE="${SHELL_STATE_DIR}/platform.env"
 
+migrate_legacy_shell_layout() {
+  if [ -f "${SHELL_HISTORY_DIR}" ]; then
+    local legacy_history="${SHELL_HOME}/history.legacy.$"
+    mv "${SHELL_HISTORY_DIR}" "${legacy_history}"
+    mkdir -p "${SHELL_HISTORY_DIR}"
+    mv "${legacy_history}" "${SHELL_HISTORY_DIR}/zsh_history"
+    echo "Migrated legacy zsh history to ${SHELL_HISTORY_DIR}/zsh_history"
+  fi
+}
+
 ensure_directories() {
+  migrate_legacy_shell_layout
   mkdir -p     "${SHELL_BIN_DIR}" "${SHELL_STATE_DIR}" "${SHELL_HISTORY_DIR}" "${ZDOTDIR}"     "${PIP_CACHE_DIR}" "${UV_CACHE_DIR}" "${MODELSCOPE_CACHE}"     "${HUGGINGFACE_HUB_CACHE}" "${TORCH_HOME}" "${NPM_CONFIG_CACHE}"     "${XDG_CACHE_HOME}" "${CUDA_CACHE_PATH}"
 }
 
