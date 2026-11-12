@@ -25,3 +25,13 @@ PIP_INDEX_URL=https://custom.example/simple
 PIP_MIRROR=aliyun
 configure_pip_mirror
 [[ "${PIP_INDEX_URL}" == "https://mirrors.aliyun.com/pypi/simple/" ]]
+
+TEMP_ROOT="$(mktemp -d)"
+trap 'rm -rf "${TEMP_ROOT}"' EXIT
+STATE_FILE="${TEMP_ROOT}/index-state"
+printf '%s\n' 'old-index-contract' > "${STATE_FILE}"
+PIP_ENV_FLAVOR=persistent-test
+PIP_INDEX_URL=https://new.example/simple
+prepare_pip_cache "${STATE_FILE}"
+test -f "${STATE_FILE}"
+echo "pip mirror regression: PASS"
