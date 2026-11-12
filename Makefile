@@ -3,7 +3,7 @@ SHELL := /bin/bash
 
 .PHONY: help init models models-image models-video models-custom doctor up down restart status logs smoke test lint \
         shell shell-init shell-status shell-env shell-cache shell-cache-clean \
-        shell-doctor shell-update shell-help tunnel tunnel-init tunnel-status tunnel-service-install tunnel-service-start tunnel-service-stop tunnel-service-restart tunnel-service-status tunnel-service-uninstall
+        shell-doctor shell-update shell-help tools-status cloudflared-install cloudflared-status tunnel tunnel-init tunnel-status tunnel-service-install tunnel-service-start tunnel-service-stop tunnel-service-restart tunnel-service-status tunnel-service-uninstall
 
 CMD ?= enter
 MODEL_PROFILE ?= all
@@ -37,7 +37,10 @@ help:
 	@echo "  make shell SHELL_KIND=bash|zsh"
 	@echo "  make shell CMD=... Unified subcommand: enter/init/status/env/cache/cache-clean/doctor/update/help"
 	@echo
-	@echo "  make tunnel-init   Install cloudflared persistently (also included in make init)"
+	@echo "  make tools-status  Show standalone tool locations"
+	@echo "  make cloudflared-install   Install cloudflared without root into persistent storage"
+	@echo "  make cloudflared-status    Inspect the standalone CLI and token settings"
+	@echo "  make tunnel-init   Compatibility alias for cloudflared-install"
 	@echo "  make tunnel        Run the remote-managed tunnel with CLOUDFLARE_TUNNEL_TOKEN"
 	@echo "  make tunnel-status Inspect CLI installation, token and runtime settings"
 	@echo "  make tunnel-service-install   Install/start the official token-based systemd service"
@@ -117,17 +120,19 @@ shell-update:
 shell-help:
 	bash scripts/shell.sh help
 
-tunnel-init:
-	bash scripts/tunnel.sh init
+tools-status:
+	@bash scripts/tools/cloudflared.sh status
 
+cloudflared-install:
+	bash scripts/tools/cloudflared.sh install
 
+cloudflared-status:
+	@bash scripts/tools/cloudflared.sh status
 
-
-
+tunnel-init: cloudflared-install
 
 tunnel:
 	bash scripts/tunnel.sh run
-
 
 
 tunnel-status:
