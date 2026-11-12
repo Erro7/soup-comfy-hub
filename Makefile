@@ -2,9 +2,12 @@ SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
 .PHONY: help init models doctor up down restart status logs smoke test lint \
-        shell shell-init shell-status shell-env shell-update shell-help
+        shell shell-init shell-status shell-env shell-cache shell-cache-clean \
+        shell-doctor shell-update shell-help
 
 CMD ?= enter
+SHELL_KIND ?= auto
+CACHE_KIND ?=
 
 help:
 	@echo "Soup-Comfy-Hub commands"
@@ -23,8 +26,12 @@ help:
 	@echo "  make shell-init    Explicitly initialize zsh and Oh My Zsh"
 	@echo "  make shell-status  Inspect shared venv and shell state"
 	@echo "  make shell-env     Print sourceable resolved environment exports"
+	@echo "  make shell-cache   Show persistent package cache sizes"
+	@echo "  make shell-cache-clean CACHE_KIND=pip   Clean one explicit cache"
+	@echo "  make shell-doctor  Validate Bash/zsh, venv, paths and permissions"
 	@echo "  make shell-update  Explicitly update Oh My Zsh"
-	@echo "  make shell CMD=... Unified shell subcommand: enter/init/status/env/update/help"
+	@echo "  make shell SHELL_KIND=bash|zsh"
+	@echo "  make shell CMD=... Unified subcommand: enter/init/status/env/cache/cache-clean/doctor/update/help"
 	@echo
 	@echo "  make test          Run tests in the project venv"
 	@echo "  make lint          Run Ruff in the project venv"
@@ -65,16 +72,25 @@ lint:
 	bash scripts/venv_exec.sh python -m ruff check gateway studio_frontend tests
 
 shell:
-	bash scripts/shell.sh "$(CMD)"
+	SHELL_KIND="$(SHELL_KIND)" CACHE_KIND="$(CACHE_KIND)" bash scripts/shell.sh "$(CMD)"
 
 shell-init:
-	bash scripts/shell.sh init
+	SHELL_KIND="$(SHELL_KIND)" bash scripts/shell.sh init
 
 shell-status:
 	bash scripts/shell.sh status
 
 shell-env:
-	bash scripts/shell.sh env
+	@bash scripts/shell.sh env
+
+shell-cache:
+	@bash scripts/shell.sh cache
+
+shell-cache-clean:
+	@CACHE_KIND="$(CACHE_KIND)" bash scripts/shell.sh cache-clean
+
+shell-doctor:
+	@bash scripts/shell.sh doctor
 
 shell-update:
 	bash scripts/shell.sh update
