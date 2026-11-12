@@ -10,10 +10,6 @@ configure_pip_mirror
 resolve_github_url() {
   local url="$1"
   local prefix="${GITHUB_MIRROR_PREFIX:-auto}"
-  local timezone="${TZ:-}"
-  if [[ -z "${timezone}" && -r /etc/timezone ]]; then
-    timezone="$(tr -d '[:space:]' < /etc/timezone)"
-  fi
   if [[ "${prefix}" == "auto" ]]; then
     # File-download proxies such as ghfast.top do not implement Git Smart HTTP
     # and must never be used as a git clone remote.
