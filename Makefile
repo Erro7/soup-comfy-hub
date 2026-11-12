@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
-.PHONY: help init venv-init venv-status venv-doctor models models-image models-video models-custom doctor up down restart status logs smoke test test-tools test-shell test-venv lint \
+.PHONY: help init venv-init venv-status venv-doctor comfy-deps comfy-deps-status models models-image models-video models-custom doctor up down restart status logs smoke test test-tools test-shell test-venv test-comfy-deps lint \
         shell shell-init shell-status shell-env shell-cache shell-cache-clean \
         shell-doctor shell-update shell-help tools-status cloudflared-install cloudflared-status tunnel tunnel-init tunnel-status tunnel-service-install tunnel-service-start tunnel-service-stop tunnel-service-restart tunnel-service-status tunnel-service-uninstall
 
@@ -18,6 +18,8 @@ help:
 	@echo "  make venv-init     Create/reuse only the persistent Python environment"
 	@echo "  make venv-status   Show base Python and venv compatibility state"
 	@echo "  make venv-doctor   Validate the persistent Python environment"
+	@echo "  make comfy-deps    Install minimal ComfyUI runtime dependencies"
+	@echo "  make comfy-deps-status   Show PyTorch and ComfyUI dependency policy"
 	@echo "  make models        Download/resume all model profiles"
 	@echo "  make models-image  Download only SDXL/InstantID/IPAdapter models"
 	@echo "  make models-video  Download only Wan video models"
@@ -65,6 +67,12 @@ venv-status:
 venv-doctor:
 	@bash scripts/venv.sh doctor
 
+comfy-deps:
+	bash scripts/comfy_deps.sh install
+
+comfy-deps-status:
+	@bash scripts/comfy_deps.sh status
+
 models:
 	MODEL_PROFILE="$(MODEL_PROFILE)" bash scripts/download_models.sh
 
@@ -106,6 +114,7 @@ test:
 	bash tests/test_shell_env.sh
 	bash tests/test_venv.sh
 	bash tests/test_pip_mirror.sh
+	bash tests/test_comfy_deps.sh
 
 test-tools:
 	bash tests/test_tools.sh
@@ -115,6 +124,9 @@ test-shell:
 
 test-venv:
 	bash tests/test_venv.sh
+
+test-comfy-deps:
+	bash tests/test_comfy_deps.sh
 
 lint:
 	bash scripts/venv_exec.sh python -m ruff check gateway studio_frontend tests
