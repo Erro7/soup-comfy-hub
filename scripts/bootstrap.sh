@@ -107,22 +107,7 @@ fi
 
 sync_repository https://github.com/Comfy-Org/ComfyUI.git "${COMFY_DIR}"
 
-COMFY_API_REQUIREMENTS=""
-cleanup_bootstrap() {
-  [ -z "${COMFY_API_REQUIREMENTS}" ] || rm -f "${COMFY_API_REQUIREMENTS}"
-}
-trap cleanup_bootstrap EXIT
-
-if [ "${INSTALL_COMFY_WORKFLOW_TEMPLATES:-0}" = "1" ]; then
-  python -m pip install -r "${COMFY_DIR}/requirements.txt"
-else
-  COMFY_API_REQUIREMENTS="$(mktemp "${DATA_DIR}/comfy-api-requirements.XXXXXX")"
-  grep -vE '^[[:space:]]*comfyui-workflow-templates([=<>!~ ].*)?$'     "${COMFY_DIR}/requirements.txt" > "${COMFY_API_REQUIREMENTS}"
-  echo "Installing ComfyUI API dependencies (template media assets skipped)."
-  python -m pip install -r "${COMFY_API_REQUIREMENTS}"
-  rm -f "${COMFY_API_REQUIREMENTS}"
-  COMFY_API_REQUIREMENTS=""
-fi
+bash "${PROJECT_DIR}/scripts/comfy_deps.sh" install
 
 install_node() {
   local repo="$1" name="$2"
