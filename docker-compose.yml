@@ -9,6 +9,8 @@ services:
         INSTALL_SOUP: ${INSTALL_SOUP:-0}
         INSTALL_GRADIO_UI: ${INSTALL_GRADIO_UI:-0}
         GITHUB_MIRROR_PREFIX: ${GITHUB_MIRROR_PREFIX:-auto}
+        COMFY_TORCH_MODE: ${COMFY_TORCH_MODE:-install}
+        TORCH_INDEX_URL: ${TORCH_INDEX_URL:-https://download.pytorch.org/whl/cu124}
     env_file: .env
     environment:
       PROJECT_DIR: /app
