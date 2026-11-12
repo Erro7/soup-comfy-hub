@@ -62,6 +62,22 @@ Cloudflared is optional. It starts only when both `ENABLE_CLOUDFLARED=1` and `CL
 
 The default installation contains only ComfyUI and FastAPI dependencies. The Notebook venv, ComfyUI checkout, pip cache, models, task database, and outputs live under `/mnt/workspace/soup-comfy-data`. Run `make init` once; subsequent container starts use `make up` and never install packages.
 
+### Persistent shell
+
+The shell environment is separate from the Python venv but stored under the same persistent data root. It keeps Oh My Zsh, `.zshrc`, history, and the managed environment across Notebook restarts, and automatically activates the project venv.
+
+```bash
+make shell-init              # one-time OMZ/config initialization
+make shell                   # enter zsh with the venv active
+make shell-status            # inspect runtime and shell persistence
+make shell-env               # print resolved paths
+make shell-update            # explicitly update OMZ
+make shell CMD=status        # unified secondary-command form
+make shell-help
+```
+
+Docker images include the `zsh` binary; mutable shell state remains in the mounted `/data/shell` directory. On a Notebook image without zsh, `make shell-init` installs the small system package when running as root.
+
 ### Optional Gradio UI
 
 Gradio is not required by any REST endpoint. Enable it only when needed with `INSTALL_GRADIO_UI=1 make init` and `ENABLE_GRADIO_UI=1`.
