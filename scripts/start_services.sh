@@ -28,7 +28,7 @@ trap cleanup EXIT INT TERM
 
 echo $$ > "${SERVICES_PID_FILE}"
 
-"${VENV_DIR}/bin/python" "${COMFY_DIR}/main.py"   --listen 127.0.0.1 --port 8188   --input-directory "${COMFY_INPUT_DIR}"   --output-directory "${COMFY_OUTPUT_DIR}"   > "${LOG_DIR}/comfyui.log" 2>&1 &
+"${VENV_DIR}/bin/python" "${COMFY_DIR}/main.py"   --listen "${COMFY_HOST:-127.0.0.1}" --port "${COMFY_PORT:-8188}"   --input-directory "${COMFY_INPUT_DIR}"   --output-directory "${COMFY_OUTPUT_DIR}"   > "${LOG_DIR}/comfyui.log" 2>&1 &
 COMFY_PID=$!
 
 echo "Waiting for ComfyUI readiness..."
@@ -82,8 +82,11 @@ fi
 
 echo
 echo "Soup-Comfy-Hub is ready"
-echo "  ComfyUI WebUI: ${COMFY_URL:-http://127.0.0.1:8188}"
-echo "  API endpoint:  ${GATEWAY_LOCAL_URL}"
+echo "  ComfyUI local:  ${COMFY_URL:-http://127.0.0.1:8188}"
+if [ -n "${COMFY_PUBLIC_URL:-}" ]; then
+  echo "  ComfyUI remote: ${COMFY_PUBLIC_URL%/}"
+fi
+echo "  API endpoint:   ${GATEWAY_LOCAL_URL}"
 echo "  API docs:      ${GATEWAY_LOCAL_URL}/docs"
 if [ -n "${GATEWAY_PUBLIC_URL:-}" ]; then
   echo "  Public API:    ${GATEWAY_PUBLIC_URL%/}"
