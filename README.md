@@ -74,7 +74,27 @@ For a literal first-run download, set `AUTO_DOWNLOAD_MODELS=1`; expect a large d
 
 The root `Dockerfile` is the lightweight ModelScope Studio reverse proxy and listens on `0.0.0.0:7860`. Configure Studio secrets `GATEWAY_PUBLIC_URL`, `API_KEY`, `CLUSTER_KEY`, and `STUDIO_API_KEY`. Studio clients authenticate with `X-API-Key` because ModelScope reserves the standard `Authorization` header.
 
-Cloudflared is optional. It starts only when both `ENABLE_CLOUDFLARED=1` and `CLOUDFLARE_TUNNEL_TOKEN` are set.
+Cloudflared is optional and persists under the shared shell storage. Install it once with `make tunnel-init`, then inspect the resolved mode and target with `make tunnel-status`.
+
+For a temporary ComfyUI URL without Cloudflare account configuration:
+
+```bash
+CLOUDFLARE_TUNNEL_MODE=quick \
+CLOUDFLARE_TUNNEL_TARGET=http://127.0.0.1:8188 \
+make tunnel
+```
+
+For a stable named tunnel, configure the public hostname and its ingress in Cloudflare, then set:
+
+```dotenv
+ENABLE_CLOUDFLARED=1
+CLOUDFLARE_TUNNEL_MODE=named
+CLOUDFLARE_TUNNEL_TARGET=http://127.0.0.1:8188
+CLOUDFLARE_TUNNEL_TOKEN=your-token
+CLOUDFLARE_PUBLIC_URL=https://comfy.example.com
+```
+
+With `ENABLE_CLOUDFLARED=1`, `make up` supervises the tunnel alongside ComfyUI and the API gateway. In `auto` mode, a configured token selects named mode; otherwise it creates a temporary quick tunnel. Quick tunnel URLs are written to `${LOG_DIR}/cloudflared.log`.
 
 ### Persistent API runtime
 
