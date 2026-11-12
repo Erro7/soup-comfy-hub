@@ -26,7 +26,7 @@ ensure_directories() {
     mkdir -p "${SHELL_HISTORY_DIR}"
     mv "${legacy}" "${SHELL_HISTORY_DIR}/zsh_history"
   fi
-  mkdir -p "${TOOLS_BIN_DIR}" "${SHELL_BIN_DIR}" "${SHELL_STATE_DIR}" \
+  mkdir -p "${DATA_DIR}" "${TOOLS_HOME}" "${TOOLS_BIN_DIR}" "${SHELL_BIN_DIR}" "${SHELL_STATE_DIR}" \
     "${SHELL_HISTORY_DIR}" "${ZDOTDIR}" "${SHELL_CONFIG_DIR}/pip" \
     "${SHELL_CONFIG_DIR}/npm" "${PIP_CACHE_DIR}" "${UV_CACHE_DIR}" \
     "${MODELSCOPE_CACHE}" "${HUGGINGFACE_HUB_CACHE}" "${TORCH_HOME}" \
