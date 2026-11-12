@@ -1,6 +1,33 @@
 SHELL := /bin/bash
+.DEFAULT_GOAL := help
 
-.PHONY: init models up down doctor smoke test lint shell shell-init shell-status shell-env shell-update shell-help
+.PHONY: help init models doctor up down restart status logs smoke test lint \
+        shell shell-init shell-status shell-env shell-update shell-help
+
+CMD ?= enter
+
+help:
+	@echo "Soup-Comfy-Hub commands"
+	@echo
+	@echo "  make init          One-time persistent venv, ComfyUI and node setup"
+	@echo "  make models        Download/resume models into persistent storage"
+	@echo "  make doctor        Validate venv, ComfyUI, nodes, models and GPU"
+	@echo "  make up            Start ComfyUI and API in the foreground"
+	@echo "  make down          Stop the exact service supervisor from its PID file"
+	@echo "  make restart       Stop, then start ComfyUI and API"
+	@echo "  make status        Show service state and persistent paths"
+	@echo "  make logs          Follow ComfyUI and gateway logs"
+	@echo "  make smoke         Test Gateway -> ComfyUI readiness"
+	@echo
+	@echo "  make shell         Enter persistent zsh using the same project venv"
+	@echo "  make shell-init    Explicitly initialize zsh and Oh My Zsh"
+	@echo "  make shell-status  Inspect shared venv and shell state"
+	@echo "  make shell-env     Print sourceable resolved environment exports"
+	@echo "  make shell-update  Explicitly update Oh My Zsh"
+	@echo "  make shell CMD=... Unified shell subcommand: enter/init/status/env/update/help"
+	@echo
+	@echo "  make test          Run tests in the project venv"
+	@echo "  make lint          Run Ruff in the project venv"
 
 init:
 	bash scripts/bootstrap.sh
@@ -8,29 +35,34 @@ init:
 models:
 	bash scripts/download_models.sh
 
+doctor:
+	bash scripts/doctor.sh
+
 up:
 	bash scripts/start_services.sh
 
-doctor:
-	bash scripts/doctor.sh
+down:
+	bash scripts/services.sh stop
+
+restart:
+	bash scripts/services.sh stop
+	bash scripts/start_services.sh
+
+status:
+	bash scripts/shell.sh status
+	bash scripts/services.sh status
+
+logs:
+	bash scripts/services.sh logs
 
 smoke:
 	bash scripts/smoke_test.sh
 
-down:
-	@if [ -f /mnt/workspace/soup-comfy-hub/logs/services.pid ]; then kill "$$(cat /mnt/workspace/soup-comfy-hub/logs/services.pid)" 2>/dev/null || true; fi
-	@pkill -f 'uvicorn gateway.main:app' 2>/dev/null || true
-	@pkill -f 'ComfyUI/main.py' 2>/dev/null || true
-
 test:
-	python -m pytest -q
+	bash scripts/venv_exec.sh python -m pytest -q
 
 lint:
-	python -m ruff check gateway studio_frontend tests
-
-# Persistent developer shell. Use "make shell CMD=status" for the unified
-# secondary-command form, or the convenience targets below.
-CMD ?= enter
+	bash scripts/venv_exec.sh python -m ruff check gateway studio_frontend tests
 
 shell:
 	bash scripts/shell.sh "$(CMD)"
