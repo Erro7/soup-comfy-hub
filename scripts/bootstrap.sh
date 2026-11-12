@@ -7,6 +7,7 @@ source "${PROJECT_DIR}/scripts/pip_mirror.sh"
 source "${PROJECT_DIR}/scripts/lib/venv.sh"
 
 configure_pip_mirror
+PIP_STATE_FILE="${DATA_DIR}/.pip-index-url"
 LEGACY_PIP_CACHE="${DATA_DIR}/pip-cache"
 if [ -d "${LEGACY_PIP_CACHE}" ] && [ ! -e "${PIP_CACHE_DIR}" ]; then
   mkdir -p "${CACHE_DIR}"
