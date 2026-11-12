@@ -22,7 +22,17 @@ COMFY_DIR="${COMFY_DIR:-${DATA_DIR}/ComfyUI}"
 VENV_DIR="${VENV_DIR:-${DATA_DIR}/venv}"
 
 export PROJECT_DIR WORKSPACE DATA_DIR COMFY_DIR VENV_DIR
-export PIP_CACHE_DIR="${PIP_CACHE_DIR:-${DATA_DIR}/pip-cache}"
+export CACHE_DIR="${CACHE_DIR:-${DATA_DIR}/cache}"
+export PIP_CACHE_DIR="${PIP_CACHE_DIR:-${CACHE_DIR}/pip}"
+export UV_CACHE_DIR="${UV_CACHE_DIR:-${CACHE_DIR}/uv}"
+export MODELSCOPE_CACHE="${MODELSCOPE_CACHE:-${CACHE_DIR}/modelscope}"
+export MODELSCOPE_CACHE_HOME="${MODELSCOPE_CACHE_HOME:-${MODELSCOPE_CACHE}}"
+export HF_HOME="${HF_HOME:-${CACHE_DIR}/huggingface}"
+export HUGGINGFACE_HUB_CACHE="${HUGGINGFACE_HUB_CACHE:-${HF_HOME}/hub}"
+export TORCH_HOME="${TORCH_HOME:-${CACHE_DIR}/torch}"
+export NPM_CONFIG_CACHE="${NPM_CONFIG_CACHE:-${CACHE_DIR}/npm}"
+export XDG_CACHE_HOME="${XDG_CACHE_HOME:-${CACHE_DIR}/xdg}"
+export CUDA_CACHE_PATH="${CUDA_CACHE_PATH:-${CACHE_DIR}/cuda}"
 export COMFY_INPUT_DIR="${COMFY_INPUT_DIR:-${COMFY_DIR}/input}"
 export COMFY_OUTPUT_DIR="${COMFY_OUTPUT_DIR:-${COMFY_DIR}/output}"
 export WORKFLOW_DIR="${WORKFLOW_DIR:-${PROJECT_DIR}/workflows}"
@@ -33,6 +43,9 @@ export TASK_DB_PATH="${TASK_DB_PATH:-${DATA_DIR}/outputs/tasks.sqlite3}"
 export LOG_DIR="${LOG_DIR:-${DATA_DIR}/logs}"
 export SERVICES_PID_FILE="${SERVICES_PID_FILE:-${LOG_DIR}/services.pid}"
 export SHELL_HOME="${SHELL_HOME:-${DATA_DIR}/shell}"
+export SHELL_BIN_DIR="${SHELL_BIN_DIR:-${SHELL_HOME}/bin}"
+export SHELL_STATE_DIR="${SHELL_STATE_DIR:-${SHELL_HOME}/state}"
+export SHELL_HISTORY_DIR="${SHELL_HISTORY_DIR:-${SHELL_HOME}/history}"
 
 runtime_require_venv() {
   if [ ! -x "${VENV_DIR}/bin/python" ]; then
