@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 
 # Portable defaults. Every value remains overridable by environment variables.
-PROJECT_DIR="${PROJECT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/paths.sh
+source "${_SCRIPT_DIR}/lib/paths.sh"
+PROJECT_DIR="${PROJECT_DIR:-$(cd "${_SCRIPT_DIR}/.." && pwd)}"
 if [ -f "${PROJECT_DIR}/.env" ]; then
   # .env supplies defaults; explicit shell/container variables take precedence.
   declare -A _runtime_env_before=()
@@ -16,12 +19,11 @@ if [ -f "${PROJECT_DIR}/.env" ]; then
   done
   unset _runtime_env_before key value
 fi
-WORKSPACE="${WORKSPACE:-$(dirname "${PROJECT_DIR}")}"
-DATA_DIR="${DATA_DIR:-${WORKSPACE}/soup-comfy-data}"
+paths_export_runtime
 COMFY_DIR="${COMFY_DIR:-${DATA_DIR}/ComfyUI}"
 VENV_DIR="${VENV_DIR:-${DATA_DIR}/venv}"
 
-export PROJECT_DIR WORKSPACE DATA_DIR COMFY_DIR VENV_DIR
+export PROJECT_DIR WORKSPACE DATA_DIR COMFY_DIR VENV_DIR TOOLS_HOME TOOLS_BIN_DIR
 export CACHE_DIR="${CACHE_DIR:-${DATA_DIR}/cache}"
 export PIP_CACHE_DIR="${PIP_CACHE_DIR:-${CACHE_DIR}/pip}"
 export UV_CACHE_DIR="${UV_CACHE_DIR:-${CACHE_DIR}/uv}"
@@ -46,10 +48,8 @@ export SHELL_HOME="${SHELL_HOME:-${DATA_DIR}/shell}"
 export SHELL_BIN_DIR="${SHELL_BIN_DIR:-${SHELL_HOME}/bin}"
 export SHELL_STATE_DIR="${SHELL_STATE_DIR:-${SHELL_HOME}/state}"
 export SHELL_HISTORY_DIR="${SHELL_HISTORY_DIR:-${SHELL_HOME}/history}"
-case ":${PATH}:" in
-  *":${SHELL_BIN_DIR}:"*) ;;
-  *) export PATH="${SHELL_BIN_DIR}:${PATH}" ;;
-esac
+paths_prepend "${TOOLS_BIN_DIR}"
+paths_prepend "${SHELL_BIN_DIR}"
 
 runtime_require_venv() {
   if [ ! -x "${VENV_DIR}/bin/python" ]; then
