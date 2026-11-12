@@ -23,6 +23,24 @@ Required image anchors: `LOAD_FACE`, `LOAD_OUTFIT`, `LOAD_POSE`, `PROMPT_POSITIV
 
 Required video anchors: `LOAD_FIRST_FRAME`, `PROMPT_POSITIVE`, `PROMPT_NEGATIVE`, `VIDEO_LATENT_CONFIG`, `VIDEO_OUTPUT`. Add `LOAD_LAST_FRAME` and/or `LOAD_REF_VIDEO` when your selected workflow supports those inputs.
 
+## Make command contract
+
+All commands resolve the same `DATA_DIR`, `VENV_DIR`, `COMFY_DIR`, cache, logs, and PID file through `scripts/runtime_env.sh`. Only explicit initialization commands may install or update software.
+
+| Command | Contract |
+|---|---|
+| `make help` | List the supported command surface. |
+| `make init` | One-time/resumable persistent venv, ComfyUI, node, and API dependency setup. |
+| `make models` | Download or resume model files; uses the existing venv or Notebook ModelScope client. |
+| `make doctor` | Validate the shared venv, API packages, nodes, models, and GPU. |
+| `make up` | Start services only; never installs packages. |
+| `make down` | Stop only the recorded supervisor PID; no broad `pkill`. |
+| `make restart/status/logs/smoke` | Operate and verify the same service instance and persistent paths. |
+| `make shell-init` | Explicitly install/configure persistent zsh and Oh My Zsh. |
+| `make shell` | Enter that shell and activate the exact same project venv; never installs. |
+| `make shell CMD=...` | Run `enter/init/status/env/update/help` through one shell command surface. |
+| `make test/lint` | Run developer tools through the shared project venv. |
+
 ## Notebook quick start
 
 ```bash
