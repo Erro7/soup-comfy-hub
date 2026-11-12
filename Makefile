@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
-.PHONY: help init models models-image models-video models-custom doctor up down restart status logs smoke test test-tools lint \
+.PHONY: help init models models-image models-video models-custom doctor up down restart status logs smoke test test-tools test-shell lint \
         shell shell-init shell-status shell-env shell-cache shell-cache-clean \
         shell-doctor shell-update shell-help tools-status cloudflared-install cloudflared-status tunnel tunnel-init tunnel-status tunnel-service-install tunnel-service-start tunnel-service-stop tunnel-service-restart tunnel-service-status tunnel-service-uninstall
 
@@ -9,6 +9,7 @@ CMD ?= enter
 MODEL_PROFILE ?= all
 SHELL_KIND ?= zsh
 CACHE_KIND ?=
+SHELL_COMMAND ?=
 
 help:
 	@echo "Soup-Comfy-Hub commands"
@@ -35,7 +36,7 @@ help:
 	@echo "  make shell-doctor  Validate Bash/zsh, venv, paths and permissions"
 	@echo "  make shell-update  Explicitly update Oh My Zsh"
 	@echo "  make shell SHELL_KIND=bash|zsh"
-	@echo "  make shell CMD=... Unified subcommand: enter/init/status/env/cache/cache-clean/doctor/update/help"
+	@echo "  make shell CMD=... Unified subcommand: enter/init/run/status/env/cache/cache-clean/doctor/update/help"
 	@echo
 	@echo "  make tools-status  Show standalone tool locations"
 	@echo "  make cloudflared-install   Install cloudflared without root into persistent storage"
@@ -90,15 +91,19 @@ smoke:
 test:
 	bash scripts/venv_exec.sh python -m pytest -q
 	bash tests/test_tools.sh
+	bash tests/test_shell_env.sh
 
 test-tools:
 	bash tests/test_tools.sh
+
+test-shell:
+	bash tests/test_shell_env.sh
 
 lint:
 	bash scripts/venv_exec.sh python -m ruff check gateway studio_frontend tests
 
 shell:
-	SHELL_KIND="$(SHELL_KIND)" CACHE_KIND="$(CACHE_KIND)" bash scripts/shell.sh "$(CMD)"
+	SHELL_KIND="$(SHELL_KIND)" CACHE_KIND="$(CACHE_KIND)" SHELL_COMMAND="$(SHELL_COMMAND)" bash scripts/shell.sh "$(CMD)"
 
 shell-init:
 	SHELL_KIND="$(SHELL_KIND)" bash scripts/shell.sh init
