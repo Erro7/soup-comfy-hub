@@ -12,7 +12,7 @@ check_file "${COMFY_DIR}/main.py" "ComfyUI"
 check_dir "${COMFY_DIR}/custom_nodes/ComfyUI-VideoHelperSuite" "VideoHelperSuite"
 check_dir "${COMFY_DIR}/custom_nodes/ComfyUI_InstantID" "InstantID nodes"
 check_dir "${COMFY_DIR}/custom_nodes/ComfyUI_IPAdapter_plus" "IPAdapter nodes"
-if [ "${INSTALL_POSE_GALLERY:-1}" = "1" ]; then
+if [ "${INSTALL_POSE_GALLERY:-0}" = "1" ]; then
   check_dir "${COMFY_DIR}/custom_nodes/ai-pose-gallery-zh/comfyui_plugin" "AI pose gallery zh"
 fi
 if [ "${ENABLE_SOUP:-0}" = "1" ]; then
