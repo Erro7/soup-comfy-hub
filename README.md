@@ -74,22 +74,22 @@ For a literal first-run download, set `AUTO_DOWNLOAD_MODELS=1`; expect a large d
 
 The root `Dockerfile` is the lightweight ModelScope Studio reverse proxy and listens on `0.0.0.0:7860`. Configure Studio secrets `GATEWAY_PUBLIC_URL`, `API_KEY`, `CLUSTER_KEY`, and `STUDIO_API_KEY`. Studio clients authenticate with `X-API-Key` because ModelScope reserves the standard `Authorization` header.
 
-Cloudflared is optional and is managed through the official locally-managed CLI lifecycle. The account certificate, tunnel credentials, and `config.yml` persist under `${DATA_DIR}/.cloudflared`.
+Cloudflared is installed into the persistent runtime by `make init` when `INSTALL_CLOUDFLARED=1` (the default). The connection uses a remotely managed Cloudflare Tunnel token; hostname routes and origin services are configured in the Cloudflare dashboard.
 
-```bash
-make tunnel-init
-make tunnel-login
-make tunnel-setup \
-  TUNNEL_NAME=soup-comfy \
-  TUNNEL_HOSTNAME=comfy.example.com \
-  TUNNEL_SERVICE=http://127.0.0.1:8188
-make tunnel-status
-make tunnel
+```dotenv
+INSTALL_CLOUDFLARED=1
+ENABLE_CLOUDFLARED=1
+CLOUDFLARE_TUNNEL_TOKEN=your-token
+CLOUDFLARE_PUBLIC_URL=https://comfy.example.com
 ```
 
-The setup command follows Cloudflare's documented sequence: create the named tunnel when absent, write and validate `config.yml`, then register the hostname with `cloudflared tunnel route dns`. Set the same values in `.env` and `ENABLE_CLOUDFLARED=1` to supervise the tunnel with `make up`.
+```bash
+make tunnel-status
+make tunnel        # foreground tunnel only
+make up            # supervise ComfyUI, API and tunnel together
+```
 
-On a normal Linux host with systemd, `make tunnel-service-install` delegates to Cloudflare's official `cloudflared --config ... service install` flow and enables the service. Use `make tunnel-service-start/stop/restart/status/uninstall` for lifecycle operations. ModelScope/DSW containers do not provide a persistent systemd instance, so use the project supervisor through `make up/down/status` there.
+On a normal Linux host with systemd, `make tunnel-service-install` delegates to Cloudflare's official `cloudflared service install <TOKEN>` flow and enables the service. ModelScope/DSW containers do not provide a persistent systemd instance, so use the project supervisor through `make up/down/status` there.
 
 The gateway binds to `127.0.0.1:8000`; Cloudflare should be the only public ingress. ComfyUI binds to loopback and is never exposed directly.
 
