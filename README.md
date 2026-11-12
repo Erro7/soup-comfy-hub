@@ -37,7 +37,7 @@ All commands resolve the same `DATA_DIR`, `VENV_DIR`, `COMFY_DIR`, cache, logs, 
 | `make down` | Stop only the recorded supervisor PID; no broad `pkill`. |
 | `make restart/status/logs/smoke` | Operate and verify the same service instance and persistent paths. |
 | `make shell-init` | Explicitly install/configure persistent zsh and Oh My Zsh. |
-| `make shell` | Enter that shell and activate the exact same project venv; never installs. |
+| `make shell` | Enter persistent zsh by default and activate the exact same project venv; never installs. |
 | `make shell CMD=...` | Run `enter/init/status/env/cache/cache-clean/doctor/update/help` through one shell command surface. |
 | `make test/lint` | Run developer tools through the shared project venv. |
 
@@ -88,8 +88,8 @@ The persistent cache root contains `pip`, `uv`, `modelscope`, `huggingface`, `to
 
 ```bash
 make shell-init                         # explicit one-time Bash/zsh/OMZ setup
-make shell                              # auto-select zsh, otherwise Bash
-make shell SHELL_KIND=bash
+make shell                              # enter persistent zsh with the shared venv
+make shell SHELL_KIND=bash               # explicit Bash fallback
 make shell SHELL_KIND=zsh
 make shell-status
 make shell-env                          # sourceable export statements
