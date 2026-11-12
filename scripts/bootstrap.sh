@@ -158,6 +158,9 @@ fi
 if [ "${INSTALL_SOUP:-0}" = "1" ]; then
   python -m pip install 'soup-cli[train]'
 fi
+if [ "${INSTALL_CLOUDFLARED:-1}" = "1" ]; then
+  bash "${PROJECT_DIR}/scripts/tunnel.sh" init
+fi
 
 sync_repository https://github.com/Comfy-Org/ComfyUI.git "${COMFY_DIR}"
 
