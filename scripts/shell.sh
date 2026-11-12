@@ -127,7 +127,9 @@ EOF
 }
 
 install_omz() {
-  [ "${INSTALL_OMZ:-1}" = 1 ] || return
+  if [ "${INSTALL_OMZ:-1}" != 1 ]; then
+    return 0
+  fi
   command -v zsh >/dev/null 2>&1 || {
     echo "WARN zsh is unavailable; Bash is ready. Install zsh, then rerun make shell-init." >&2
     return
@@ -140,6 +142,7 @@ install_omz() {
     echo "Installing Oh My Zsh into persistent storage: ${OMZ_DIR}"
     git clone --depth 1 "${OMZ_GIT_URL:-https://github.com/ohmyzsh/ohmyzsh.git}" "${OMZ_DIR}"
   fi
+  return 0
 }
 
 init_shell() {
