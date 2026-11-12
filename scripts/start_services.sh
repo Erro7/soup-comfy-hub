@@ -72,12 +72,14 @@ for attempt in $(seq 1 "${GATEWAY_STARTUP_TIMEOUT:-60}"); do
   sleep 1
 done
 
-if [ "${ENABLE_CLOUDFLARED:-0}" = "1" ] && [ -n "${CLOUDFLARE_TUNNEL_TOKEN:-}" ]; then
-  command -v cloudflared >/dev/null || {
-    echo "cloudflared is required when the optional tunnel is enabled" >&2
+if [ "${ENABLE_CLOUDFLARED:-0}" = "1" ]; then
+  bash "${PROJECT_DIR}/scripts/tunnel.sh" run > "${LOG_DIR}/cloudflared.log" 2>&1 &
+  CLOUDFLARED_PID=$!
+  sleep 1
+  if ! kill -0 "${CLOUDFLARED_PID}" 2>/dev/null; then
+    echo "Cloudflare tunnel exited during startup; see ${LOG_DIR}/cloudflared.log" >&2
     exit 1
-  }
-  cloudflared tunnel --no-autoupdate run --token "${CLOUDFLARE_TUNNEL_TOKEN}"     > "${LOG_DIR}/cloudflared.log" 2>&1 &
+  fi
 fi
 
 echo
@@ -90,6 +92,13 @@ echo "  API endpoint:   ${GATEWAY_LOCAL_URL}"
 echo "  API docs:      ${GATEWAY_LOCAL_URL}/docs"
 if [ -n "${GATEWAY_PUBLIC_URL:-}" ]; then
   echo "  Public API:    ${GATEWAY_PUBLIC_URL%/}"
+fi
+if [ "${ENABLE_CLOUDFLARED:-0}" = "1" ]; then
+  if [ -n "${CLOUDFLARE_PUBLIC_URL:-}" ]; then
+    echo "  Tunnel URL:    ${CLOUDFLARE_PUBLIC_URL%/}"
+  else
+    echo "  Tunnel URL:    see ${LOG_DIR}/cloudflared.log"
+  fi
 fi
 echo "  Logs:          ${LOG_DIR}"
 echo
