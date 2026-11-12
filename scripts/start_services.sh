@@ -48,6 +48,29 @@ for attempt in $(seq 1 "${COMFY_STARTUP_TIMEOUT:-180}"); do
 done
 
 "${VENV_DIR}/bin/python" -m uvicorn gateway.main:app   --host "${GATEWAY_HOST:-127.0.0.1}"   --port "${GATEWAY_PORT:-8000}"   > "${LOG_DIR}/gateway.log" 2>&1 &
+GATEWAY_PID=$!
+
+GATEWAY_DISPLAY_HOST="${GATEWAY_HOST:-127.0.0.1}"
+if [ "${GATEWAY_DISPLAY_HOST}" = "0.0.0.0" ] || [ "${GATEWAY_DISPLAY_HOST}" = "::" ]; then
+  GATEWAY_DISPLAY_HOST="127.0.0.1"
+fi
+GATEWAY_LOCAL_URL="http://${GATEWAY_DISPLAY_HOST}:${GATEWAY_PORT:-8000}"
+
+echo "Waiting for API Gateway readiness..."
+for attempt in $(seq 1 "${GATEWAY_STARTUP_TIMEOUT:-60}"); do
+  if ! kill -0 "${GATEWAY_PID}" 2>/dev/null; then
+    echo "API Gateway exited during startup; see ${LOG_DIR}/gateway.log" >&2
+    exit 1
+  fi
+  if curl -fsS "${GATEWAY_LOCAL_URL}/readyz" >/dev/null 2>&1; then
+    break
+  fi
+  if [ "${attempt}" -eq "${GATEWAY_STARTUP_TIMEOUT:-60}" ]; then
+    echo "API Gateway did not become ready within ${GATEWAY_STARTUP_TIMEOUT:-60}s" >&2
+    exit 1
+  fi
+  sleep 1
+done
 
 if [ "${ENABLE_CLOUDFLARED:-0}" = "1" ] && [ -n "${CLOUDFLARE_TUNNEL_TOKEN:-}" ]; then
   command -v cloudflared >/dev/null || {
@@ -56,5 +79,16 @@ if [ "${ENABLE_CLOUDFLARED:-0}" = "1" ] && [ -n "${CLOUDFLARE_TUNNEL_TOKEN:-}" ]
   }
   cloudflared tunnel --no-autoupdate run --token "${CLOUDFLARE_TUNNEL_TOKEN}"     > "${LOG_DIR}/cloudflared.log" 2>&1 &
 fi
+
+echo
+echo "Soup-Comfy-Hub is ready"
+echo "  ComfyUI WebUI: ${COMFY_URL:-http://127.0.0.1:8188}"
+echo "  API endpoint:  ${GATEWAY_LOCAL_URL}"
+echo "  API docs:      ${GATEWAY_LOCAL_URL}/docs"
+if [ -n "${GATEWAY_PUBLIC_URL:-}" ]; then
+  echo "  Public API:    ${GATEWAY_PUBLIC_URL%/}"
+fi
+echo "  Logs:          ${LOG_DIR}"
+echo
 
 wait -n
