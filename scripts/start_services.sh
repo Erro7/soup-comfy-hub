@@ -47,7 +47,7 @@ for attempt in $(seq 1 "${COMFY_STARTUP_TIMEOUT:-180}"); do
   sleep 1
 done
 
-"${VENV_DIR}/bin/uvicorn" gateway.main:app   --host "${GATEWAY_HOST:-127.0.0.1}"   --port "${GATEWAY_PORT:-8000}"   > "${LOG_DIR}/gateway.log" 2>&1 &
+"${VENV_DIR}/bin/python" -m uvicorn gateway.main:app   --host "${GATEWAY_HOST:-127.0.0.1}"   --port "${GATEWAY_PORT:-8000}"   > "${LOG_DIR}/gateway.log" 2>&1 &
 
 if [ "${ENABLE_CLOUDFLARED:-0}" = "1" ] && [ -n "${CLOUDFLARE_TUNNEL_TOKEN:-}" ]; then
   command -v cloudflared >/dev/null || {
