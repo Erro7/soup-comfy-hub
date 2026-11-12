@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: init models up down doctor smoke test lint
+.PHONY: init models up down doctor smoke test lint shell shell-init shell-status shell-env shell-update shell-help
 
 init:
 	bash scripts/bootstrap.sh
@@ -27,3 +27,25 @@ test:
 
 lint:
 	python -m ruff check gateway studio_frontend tests
+
+# Persistent developer shell. Use "make shell CMD=status" for the unified
+# secondary-command form, or the convenience targets below.
+CMD ?= enter
+
+shell:
+	bash scripts/shell.sh "$(CMD)"
+
+shell-init:
+	bash scripts/shell.sh init
+
+shell-status:
+	bash scripts/shell.sh status
+
+shell-env:
+	bash scripts/shell.sh env
+
+shell-update:
+	bash scripts/shell.sh update
+
+shell-help:
+	bash scripts/shell.sh help
