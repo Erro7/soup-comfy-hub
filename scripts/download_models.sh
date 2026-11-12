@@ -14,7 +14,7 @@ if python3 -c 'import modelscope' >/dev/null 2>&1 && command -v modelscope >/dev
   echo "Using ModelScope preinstalled by the Notebook image."
 fi
 
-source "${VENV_DIR}/bin/activate"
+runtime_activate_venv
 if [ -z "${MS_PYTHON}" ]; then
   if ! python -c 'import modelscope' >/dev/null 2>&1; then
     MODELSCOPE_PIP_INDEX_URL="${MODELSCOPE_PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}"
