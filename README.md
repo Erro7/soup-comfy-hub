@@ -37,6 +37,8 @@ All commands resolve the same `DATA_DIR`, `VENV_DIR`, `COMFY_DIR`, cache, logs, 
 | `make down` | Stop only the recorded supervisor PID; no broad `pkill`. |
 | `make restart/status/logs/smoke` | Operate and verify the same service instance and persistent paths. |
 | `make shell-init` | Explicitly install/configure persistent zsh and Oh My Zsh. |
+| `make cloudflared-install` | Install the standalone CLI into writable persistent storage; no root or image rebuild. |
+| `make cloudflared-status` | Show the resolved CLI/path/token state without exposing the token. |
 | `make shell` | Enter persistent zsh by default and activate the exact same project venv; never installs. |
 | `make shell CMD=...` | Run `enter/init/status/env/cache/cache-clean/doctor/update/help` through one shell command surface. |
 | `make test/lint` | Run developer tools through the shared project venv. |
@@ -74,7 +76,11 @@ For a literal first-run download, set `AUTO_DOWNLOAD_MODELS=1`; expect a large d
 
 The root `Dockerfile` is the lightweight ModelScope Studio reverse proxy and listens on `0.0.0.0:7860`. Configure Studio secrets `GATEWAY_PUBLIC_URL`, `API_KEY`, `CLUSTER_KEY`, and `STUDIO_API_KEY`. Studio clients authenticate with `X-API-Key` because ModelScope reserves the standard `Authorization` header.
 
-Cloudflared is installed into the persistent runtime by `make init` when `INSTALL_CLOUDFLARED=1` (the default). The connection uses a remotely managed Cloudflare Tunnel token; hostname routes and origin services are configured in the Cloudflare dashboard.
+Cloudflared is a standalone tool and does not depend on ComfyUI, Python, the venv, zsh, or Oh My Zsh. It is installed by `make init` when `INSTALL_CLOUDFLARED=1`, or explicitly with `make cloudflared-install`. It is not required in the image and does not need root.
+
+The writable tool path priority is: `TOOLS_HOME` override, `DATA_DIR/tools` (for example ModelScope's persistent workspace), the user's XDG data directory, then the project-local `.tools` fallback. The shared Bash/zsh environment adds its `bin` directory to `PATH`.
+
+The connection uses a remotely managed Cloudflare Tunnel token; hostname routes and origin services are configured in the Cloudflare dashboard.
 
 ```dotenv
 INSTALL_CLOUDFLARED=1
@@ -84,7 +90,8 @@ CLOUDFLARE_PUBLIC_URL=https://comfy.example.com
 ```
 
 ```bash
-make tunnel-status
+make cloudflared-install
+make cloudflared-status
 make tunnel        # foreground tunnel only
 make up            # supervise ComfyUI, API and tunnel together
 ```
@@ -159,3 +166,8 @@ make lint
 ```
 
 MIT licensed. Model weights and custom nodes retain their own licenses.
+
+
+## Staged implementation
+
+Progress, phase acceptance criteria, and the final Git policy are tracked in [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md).
