@@ -4,6 +4,7 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/runtime_env.sh"
 source "${PROJECT_DIR}/scripts/pip_mirror.sh"
+source "${PROJECT_DIR}/scripts/lib/venv.sh"
 
 configure_pip_mirror
 LEGACY_PIP_CACHE="${DATA_DIR}/pip-cache"
@@ -15,35 +16,6 @@ fi
 mkdir -p "${DATA_DIR}" "${PIP_CACHE_DIR}" "${TASK_OUTPUT_DIR}" "${LOG_DIR}"
 
 command -v git >/dev/null || { echo "git is required" >&2; exit 1; }
-
-select_base_python() {
-  local requested="${PYTHON_BIN:-}"
-  local candidate resolved
-  if [ -n "${requested}" ]; then
-    command -v "${requested}" >/dev/null 2>&1 || {
-      echo "PYTHON_BIN is not executable: ${requested}" >&2
-      return 1
-    }
-    command -v "${requested}"
-    return
-  fi
-  for candidate in python python3 /opt/conda/bin/python; do
-    resolved="$(command -v "${candidate}" 2>/dev/null || true)"
-    [ -n "${resolved}" ] || continue
-    if "${resolved}" -c 'import torch' >/dev/null 2>&1; then
-      printf '%s\n' "${resolved}"
-      return
-    fi
-  done
-  command -v python3 2>/dev/null || command -v python 2>/dev/null || {
-    echo "No usable Python interpreter was found." >&2
-    return 1
-  }
-}
-
-BASE_PYTHON="$(select_base_python)"
-BASE_PYTHON="$("${BASE_PYTHON}" -c 'import os,sys; print(os.path.realpath(sys.executable))')"
-echo "Selected base Python: ${BASE_PYTHON}"
 
 if ! command -v ffmpeg >/dev/null; then
   if command -v apt-get >/dev/null && [ "$(id -u)" -eq 0 ]; then
@@ -101,44 +73,14 @@ sync_repository() {
   fi
 }
 
-VENV_SYSTEM_MODE="${VENV_USE_SYSTEM_SITE_PACKAGES:-auto}"
-BASE_HAS_TORCH=0
-"${BASE_PYTHON}" -c 'import torch' >/dev/null 2>&1 && BASE_HAS_TORCH=1
-[ "${VENV_SYSTEM_MODE}" != "auto" ] || VENV_SYSTEM_MODE="${BASE_HAS_TORCH}"
-
-case "${VENV_SYSTEM_MODE}" in
-  1|true|yes)
-    [ "${BASE_HAS_TORCH}" = "1" ] || {
-      echo "Selected Python cannot import torch: ${BASE_PYTHON}" >&2
-      echo "Set PYTHON_BIN to the interpreter preloaded with PyTorch." >&2
-      exit 1
-    }
-    PYTHON_ID="$("${BASE_PYTHON}" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
-    export PIP_ENV_FLAVOR="system-site-packages:${BASE_PYTHON}:${PYTHON_ID}"
-    VENV_ARGS=(--system-site-packages)
-    echo "Reusing PyTorch/CUDA packages from ${BASE_PYTHON}."
-    ;;
-  0|false|no)
-    PYTHON_ID="$("${BASE_PYTHON}" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
-    export PIP_ENV_FLAVOR="isolated:${BASE_PYTHON}:${PYTHON_ID}"
-    VENV_ARGS=()
-    ;;
-  *)
-    echo "VENV_USE_SYSTEM_SITE_PACKAGES must be auto, 1, or 0" >&2
-    exit 2
-    ;;
-esac
-
-PIP_STATE_FILE="${DATA_DIR}/.pip-index-url"
-if pip_index_changed "${PIP_STATE_FILE}"; then
-  echo "Python base/index mode changed; rebuilding only ${VENV_DIR} once."
-  "${BASE_PYTHON}" -m venv --clear "${VENV_ARGS[@]}" "${VENV_DIR}"
-else
-  "${BASE_PYTHON}" -m venv "${VENV_ARGS[@]}" "${VENV_DIR}"
-fi
+venv_ensure
+VENV_SYSTEM_MODE="$(sed -n 's/^SYSTEM_SITE_PACKAGES=//p' "${VENV_STATE_FILE}")"
+BASE_PYTHON="$(sed -n 's/^BASE_PYTHON=//p' "${VENV_STATE_FILE}")"
+export PIP_ENV_FLAVOR="persistent:${BASE_PYTHON}:system-site=${VENV_SYSTEM_MODE}"
+echo "Selected base Python: ${BASE_PYTHON}"
 
 runtime_activate_venv
-if [[ "${PIP_ENV_FLAVOR}" == system-site-packages:* ]]; then
+if [ "${VENV_SYSTEM_MODE}" = 1 ]; then
   python - <<'PY'
 import torch
 print(f"Verified inherited torch={torch.__version__} cuda={torch.version.cuda} path={torch.__file__}")
