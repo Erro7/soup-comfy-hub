@@ -74,84 +74,22 @@ For a literal first-run download, set `AUTO_DOWNLOAD_MODELS=1`; expect a large d
 
 The root `Dockerfile` is the lightweight ModelScope Studio reverse proxy and listens on `0.0.0.0:7860`. Configure Studio secrets `GATEWAY_PUBLIC_URL`, `API_KEY`, `CLUSTER_KEY`, and `STUDIO_API_KEY`. Studio clients authenticate with `X-API-Key` because ModelScope reserves the standard `Authorization` header.
 
-Cloudflared is optional and persists under the shared shell storage. Install it once with `make tunnel-init`, then inspect the resolved mode and target with `make tunnel-status`.
-
-For a temporary ComfyUI URL without Cloudflare account configuration:
+Cloudflared is optional and is managed through the official locally-managed CLI lifecycle. The account certificate, tunnel credentials, and `config.yml` persist under `${DATA_DIR}/.cloudflared`.
 
 ```bash
-CLOUDFLARE_TUNNEL_MODE=quick \
-CLOUDFLARE_TUNNEL_TARGET=http://127.0.0.1:8188 \
+make tunnel-init
+make tunnel-login
+make tunnel-setup \
+  TUNNEL_NAME=soup-comfy \
+  TUNNEL_HOSTNAME=comfy.example.com \
+  TUNNEL_SERVICE=http://127.0.0.1:8188
+make tunnel-status
 make tunnel
 ```
 
-For a stable named tunnel, configure the public hostname and its ingress in Cloudflare, then set:
+The setup command follows Cloudflare's documented sequence: create the named tunnel when absent, write and validate `config.yml`, then register the hostname with `cloudflared tunnel route dns`. Set the same values in `.env` and `ENABLE_CLOUDFLARED=1` to supervise the tunnel with `make up`.
 
-```dotenv
-ENABLE_CLOUDFLARED=1
-CLOUDFLARE_TUNNEL_MODE=named
-CLOUDFLARE_TUNNEL_TARGET=http://127.0.0.1:8188
-CLOUDFLARE_TUNNEL_TOKEN=your-token
-CLOUDFLARE_PUBLIC_URL=https://comfy.example.com
-```
-
-With `ENABLE_CLOUDFLARED=1`, `make up` supervises the tunnel alongside ComfyUI and the API gateway. In `auto` mode, a configured token selects named mode; otherwise it creates a temporary quick tunnel. Quick tunnel URLs are written to `${LOG_DIR}/cloudflared.log`.
-
-### Persistent API runtime
-
-The default installation contains only ComfyUI and FastAPI dependencies. The Notebook venv, ComfyUI checkout, pip cache, models, task database, and outputs live under `/mnt/workspace/soup-comfy-data`. Run `make init` once; subsequent container starts use `make up` and never install packages.
-
-### Unified Bash/zsh and cache layer
-
-Bash and zsh source the same generated `shell/env.sh`, prepend the same project venv and persistent `shell/bin` to `PATH`, and share platform state while keeping separate history files. No second Python environment is created.
-
-The persistent cache root contains `pip`, `uv`, `modelscope`, `huggingface`, `torch`, `npm`, `xdg`, and `cuda` caches. Docker uses `/data/cache`; Notebook mode uses `/mnt/workspace/soup-comfy-data/cache`.
-
-```bash
-make shell-init                         # explicit one-time Bash/zsh/OMZ setup
-make shell                              # enter persistent zsh with the shared venv
-make shell SHELL_KIND=bash               # explicit Bash fallback
-make shell SHELL_KIND=zsh
-make shell-status
-make shell-env                          # sourceable export statements
-make shell-cache                        # cache size summary
-make shell-cache-clean CACHE_KIND=pip   # explicit, scoped cleanup
-make shell-doctor
-make shell-update
-make shell CMD=help
-```
-
-`make shell` never installs packages. Docker images include the zsh binary; mutable configuration, commands, history, and caches stay in the mounted data volume. System packages remain the responsibility of the base image or the explicit `make shell-init` command.
-
-### ComfyUI API dependency mode
-
-The default bootstrap omits `comfyui-workflow-templates` and its large media-asset packages. They only populate the Web UI Templates browser and are not required for the bundled API-format workflows. Set `INSTALL_COMFY_WORKFLOW_TEMPLATES=1` only when the complete ComfyUI template gallery is required and the selected PyPI index contains every asset package.
-
-### Optional Gradio UI
-
-Gradio is not required by any REST endpoint. Enable it only when needed with `INSTALL_GRADIO_UI=1 make init` and `ENABLE_GRADIO_UI=1`.
-
-### Optional Soup
-
-Soup is disabled by default and is not needed for image or video APIs. In Notebook mode, install and enable it with `INSTALL_SOUP=1 make init` plus `ENABLE_SOUP=1`. For Docker, set both values before `docker compose build`; enabling Soup at runtime without building it into the image will fail `make doctor`.
-
-### Pose gallery plugin
-
-Bootstrap installs [`anhao/ai-pose-gallery-zh`](https://github.com/anhao/ai-pose-gallery-zh) only when `INSTALL_POSE_GALLERY=1`. It provides pose, costume, portrait and three-in-one recipe nodes. The repository includes a large offline image library, so the first clone requires roughly 1.1 GB in addition to model weights. Keep `INSTALL_POSE_GALLERY=0` for the minimal API runtime. The gallery contains optional 18+ reference categories; its own safe mode and source-specific image licenses still apply.
-
-### PyPI mirror selection
-
-`make init` detects the timezone. Mainland-China zones automatically use the
-Tsinghua PyPI mirror; other zones use official PyPI. Override it at any time:
-
-```bash
-PIP_MIRROR=tsinghua make init  # Tsinghua TUNA
-PIP_MIRROR=aliyun make init    # Alibaba Cloud
-PIP_MIRROR=pypi make init      # official PyPI
-PIP_INDEX_URL=https://example.com/simple make init  # custom index in auto mode
-```
-
-For Docker builds, pass `--build-arg PIP_MIRROR=tsinghua`. Mirror selection is
-process-local and does not rewrite the user's global `pip.conf`.
+On a normal Linux host with systemd, `make tunnel-service-install` delegates to Cloudflare's official `cloudflared --config ... service install` flow and enables the service. Use `make tunnel-service-start/stop/restart/status/uninstall` for lifecycle operations. ModelScope/DSW containers do not provide a persistent systemd instance, so use the project supervisor through `make up/down/status` there.
 
 The gateway binds to `127.0.0.1:8000`; Cloudflare should be the only public ingress. ComfyUI binds to loopback and is never exposed directly.
 
