@@ -37,7 +37,7 @@ for attempt in $(seq 1 "${COMFY_STARTUP_TIMEOUT:-180}"); do
     echo "ComfyUI exited during startup; see ${LOG_DIR}/comfyui.log" >&2
     exit 1
   fi
-  if curl -fsS "${COMFY_URL:-http://127.0.0.1:8188}/system_stats" >/dev/null 2>&1; then
+  if "${VENV_DIR}/bin/python" -c 'import sys, urllib.request; urllib.request.urlopen(sys.argv[1], timeout=2).read(1)' "${COMFY_URL:-http://127.0.0.1:8188}/system_stats" >/dev/null 2>&1; then
     break
   fi
   if [ "${attempt}" -eq "${COMFY_STARTUP_TIMEOUT:-180}" ]; then
@@ -62,7 +62,7 @@ for attempt in $(seq 1 "${GATEWAY_STARTUP_TIMEOUT:-60}"); do
     echo "API Gateway exited during startup; see ${LOG_DIR}/gateway.log" >&2
     exit 1
   fi
-  if curl -fsS "${GATEWAY_LOCAL_URL}/readyz" >/dev/null 2>&1; then
+  if "${VENV_DIR}/bin/python" -c 'import sys, urllib.request; urllib.request.urlopen(sys.argv[1], timeout=2).read(1)' "${GATEWAY_LOCAL_URL}/readyz" >/dev/null 2>&1; then
     break
   fi
   if [ "${attempt}" -eq "${GATEWAY_STARTUP_TIMEOUT:-60}" ]; then
