@@ -6,6 +6,12 @@ source "${SCRIPT_DIR}/runtime_env.sh"
 source "${PROJECT_DIR}/scripts/pip_mirror.sh"
 
 configure_pip_mirror
+LEGACY_PIP_CACHE="${DATA_DIR}/pip-cache"
+if [ -d "${LEGACY_PIP_CACHE}" ] && [ ! -e "${PIP_CACHE_DIR}" ]; then
+  mkdir -p "${CACHE_DIR}"
+  mv "${LEGACY_PIP_CACHE}" "${PIP_CACHE_DIR}"
+  echo "Migrated legacy pip cache to ${PIP_CACHE_DIR}"
+fi
 mkdir -p "${DATA_DIR}" "${PIP_CACHE_DIR}" "${TASK_OUTPUT_DIR}" "${LOG_DIR}"
 
 command -v git >/dev/null || { echo "git is required" >&2; exit 1; }
