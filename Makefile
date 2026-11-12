@@ -105,6 +105,7 @@ test:
 	bash tests/test_tools.sh
 	bash tests/test_shell_env.sh
 	bash tests/test_venv.sh
+	bash tests/test_pip_mirror.sh
 
 test-tools:
 	bash tests/test_tools.sh
