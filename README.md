@@ -38,7 +38,7 @@ All commands resolve the same `DATA_DIR`, `VENV_DIR`, `COMFY_DIR`, cache, logs, 
 | `make restart/status/logs/smoke` | Operate and verify the same service instance and persistent paths. |
 | `make shell-init` | Explicitly install/configure persistent zsh and Oh My Zsh. |
 | `make shell` | Enter that shell and activate the exact same project venv; never installs. |
-| `make shell CMD=...` | Run `enter/init/status/env/update/help` through one shell command surface. |
+| `make shell CMD=...` | Run `enter/init/status/env/cache/cache-clean/doctor/update/help` through one shell command surface. |
 | `make test/lint` | Run developer tools through the shared project venv. |
 
 ## Notebook quick start
@@ -80,21 +80,27 @@ Cloudflared is optional. It starts only when both `ENABLE_CLOUDFLARED=1` and `CL
 
 The default installation contains only ComfyUI and FastAPI dependencies. The Notebook venv, ComfyUI checkout, pip cache, models, task database, and outputs live under `/mnt/workspace/soup-comfy-data`. Run `make init` once; subsequent container starts use `make up` and never install packages.
 
-### Persistent shell
+### Unified Bash/zsh and cache layer
 
-The shell environment is separate from the Python venv but stored under the same persistent data root. It keeps Oh My Zsh, `.zshrc`, history, and the managed environment across Notebook restarts, and automatically activates the project venv.
+Bash and zsh source the same generated `shell/env.sh`, prepend the same project venv and persistent `shell/bin` to `PATH`, and share platform state while keeping separate history files. No second Python environment is created.
+
+The persistent cache root contains `pip`, `uv`, `modelscope`, `huggingface`, `torch`, `npm`, `xdg`, and `cuda` caches. Docker uses `/data/cache`; Notebook mode uses `/mnt/workspace/soup-comfy-data/cache`.
 
 ```bash
-make shell-init              # one-time OMZ/config initialization
-make shell                   # enter zsh with the venv active
-make shell-status            # inspect runtime and shell persistence
-make shell-env               # print resolved paths
-make shell-update            # explicitly update OMZ
-make shell CMD=status        # unified secondary-command form
-make shell-help
+make shell-init                         # explicit one-time Bash/zsh/OMZ setup
+make shell                              # auto-select zsh, otherwise Bash
+make shell SHELL_KIND=bash
+make shell SHELL_KIND=zsh
+make shell-status
+make shell-env                          # sourceable export statements
+make shell-cache                        # cache size summary
+make shell-cache-clean CACHE_KIND=pip   # explicit, scoped cleanup
+make shell-doctor
+make shell-update
+make shell CMD=help
 ```
 
-Docker images include the `zsh` binary; mutable shell state remains in the mounted `/data/shell` directory. On a Notebook image without zsh, `make shell-init` installs the small system package when running as root.
+`make shell` never installs packages. Docker images include the zsh binary; mutable configuration, commands, history, and caches stay in the mounted data volume. System packages remain the responsibility of the base image or the explicit `make shell-init` command.
 
 ### ComfyUI API dependency mode
 
