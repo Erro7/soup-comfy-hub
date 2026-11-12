@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
-.PHONY: help init models models-image models-video models-custom doctor up down restart status logs smoke test lint \
+.PHONY: help init models models-image models-video models-custom doctor up down restart status logs smoke test test-tools lint \
         shell shell-init shell-status shell-env shell-cache shell-cache-clean \
         shell-doctor shell-update shell-help tools-status cloudflared-install cloudflared-status tunnel tunnel-init tunnel-status tunnel-service-install tunnel-service-start tunnel-service-stop tunnel-service-restart tunnel-service-status tunnel-service-uninstall
 
@@ -89,6 +89,10 @@ smoke:
 
 test:
 	bash scripts/venv_exec.sh python -m pytest -q
+	bash tests/test_tools.sh
+
+test-tools:
+	bash tests/test_tools.sh
 
 lint:
 	bash scripts/venv_exec.sh python -m ruff check gateway studio_frontend tests
