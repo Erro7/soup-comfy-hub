@@ -73,15 +73,45 @@ sync_repository() {
   fi
 }
 
+VENV_SYSTEM_MODE="${VENV_USE_SYSTEM_SITE_PACKAGES:-auto}"
+if [ "${VENV_SYSTEM_MODE}" = "auto" ]; then
+  if python3 -c 'import torch' >/dev/null 2>&1; then
+    VENV_SYSTEM_MODE="1"
+  else
+    VENV_SYSTEM_MODE="0"
+  fi
+fi
+case "${VENV_SYSTEM_MODE}" in
+  1|true|yes)
+    export PIP_ENV_FLAVOR="system-site-packages"
+    VENV_ARGS=(--system-site-packages)
+    echo "Reusing PyTorch/CUDA packages preinstalled by the base image."
+    ;;
+  0|false|no)
+    export PIP_ENV_FLAVOR="isolated"
+    VENV_ARGS=()
+    ;;
+  *)
+    echo "VENV_USE_SYSTEM_SITE_PACKAGES must be auto, 1, or 0" >&2
+    exit 2
+    ;;
+esac
+
 PIP_STATE_FILE="${DATA_DIR}/.pip-index-url"
 if pip_index_changed "${PIP_STATE_FILE}"; then
-  echo "Package index changed; rebuilding the persistent venv."
-  python3 -m venv --clear "${VENV_DIR}"
+  echo "Python base/index mode changed; rebuilding the persistent venv once."
+  python3 -m venv --clear "${VENV_ARGS[@]}" "${VENV_DIR}"
 else
-  python3 -m venv "${VENV_DIR}"
+  python3 -m venv "${VENV_ARGS[@]}" "${VENV_DIR}"
 fi
 
 runtime_activate_venv
+if [ "${PIP_ENV_FLAVOR}" = "system-site-packages" ]; then
+  python - <<'PY'
+import torch
+print(f"Using base-image torch={torch.__version__} cuda={torch.version.cuda} path={torch.__file__}")
+PY
+fi
 prepare_pip_cache "${PIP_STATE_FILE}"
 record_pip_environment "${PIP_STATE_FILE}"
 
