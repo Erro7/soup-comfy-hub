@@ -3,7 +3,7 @@ SHELL := /bin/bash
 
 .PHONY: help init models models-image models-video models-custom doctor up down restart status logs smoke test lint \
         shell shell-init shell-status shell-env shell-cache shell-cache-clean \
-        shell-doctor shell-update shell-help
+        shell-doctor shell-update shell-help tunnel tunnel-init tunnel-status
 
 CMD ?= enter
 MODEL_PROFILE ?= all
@@ -36,6 +36,10 @@ help:
 	@echo "  make shell-update  Explicitly update Oh My Zsh"
 	@echo "  make shell SHELL_KIND=bash|zsh"
 	@echo "  make shell CMD=... Unified subcommand: enter/init/status/env/cache/cache-clean/doctor/update/help"
+	@echo
+	@echo "  make tunnel-init   Install cloudflared into persistent shell storage"
+	@echo "  make tunnel        Run the configured quick or named Cloudflare tunnel"
+	@echo "  make tunnel-status Inspect tunnel mode, target and installation"
 	@echo
 	@echo "  make test          Run tests in the project venv"
 	@echo "  make lint          Run Ruff in the project venv"
@@ -110,3 +114,12 @@ shell-update:
 
 shell-help:
 	bash scripts/shell.sh help
+
+tunnel-init:
+	bash scripts/tunnel.sh init
+
+tunnel:
+	bash scripts/tunnel.sh run
+
+tunnel-status:
+	bash scripts/tunnel.sh status
