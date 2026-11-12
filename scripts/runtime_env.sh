@@ -46,6 +46,10 @@ export SHELL_HOME="${SHELL_HOME:-${DATA_DIR}/shell}"
 export SHELL_BIN_DIR="${SHELL_BIN_DIR:-${SHELL_HOME}/bin}"
 export SHELL_STATE_DIR="${SHELL_STATE_DIR:-${SHELL_HOME}/state}"
 export SHELL_HISTORY_DIR="${SHELL_HISTORY_DIR:-${SHELL_HOME}/history}"
+case ":${PATH}:" in
+  *":${SHELL_BIN_DIR}:"*) ;;
+  *) export PATH="${SHELL_BIN_DIR}:${PATH}" ;;
+esac
 
 runtime_require_venv() {
   if [ ! -x "${VENV_DIR}/bin/python" ]; then
