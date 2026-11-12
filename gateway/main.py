@@ -1,8 +1,6 @@
 import asyncio
-import base64
 from contextlib import asynccontextmanager
 
-import gradio as gr
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 
@@ -110,19 +108,18 @@ if settings.enable_soup:
         return {"task_id": task["id"], "status": task["status"]}
 
 
-def _to_b64(path: str | None) -> str:
-    return base64.b64encode(open(path, "rb").read()).decode() if path else ""
+if settings.enable_gradio_ui:
+    import gradio as gr
 
+    with gr.Blocks(title="Soup-Comfy-Hub") as demo:
+        gr.Markdown("# Soup-Comfy-Hub\nAPI-first ComfyUI image and video orchestration console.")
+        gr.Markdown("Production clients should use the authenticated REST API under `/v1`.")
+        with gr.Tab("Image workflow"):
+            gr.Markdown("Use `POST /v1/images/edits`.")
+        with gr.Tab("Video workflow"):
+            gr.Markdown("Use `POST /v1/videos/generations` and poll `/v1/tasks/{task_id}`.")
+        if settings.enable_soup:
+            with gr.Tab("Soup"):
+                gr.Markdown("Optional training is available through `POST /v1/soup/train`.")
 
-with gr.Blocks(title="Soup-Comfy-Hub") as demo:
-    gr.Markdown("# Soup-Comfy-Hub\nAPI-first ComfyUI image and video orchestration console.")
-    gr.Markdown("For authenticated production calls, use the REST API under `/v1`. This UI is intended for local debugging.")
-    with gr.Tab("Image workflow"):
-        gr.Markdown("Three-reference portrait workflow is available through `POST /v1/images/edits`.")
-    with gr.Tab("🎬 Video workflow"):
-        gr.Markdown("Wan 2.1 I2V is available through `POST /v1/videos/generations`; poll `/v1/tasks/{task_id}`.")
-    if settings.enable_soup:
-        with gr.Tab("Soup"):
-            gr.Markdown("Optional training is queued through `POST /v1/soup/train`.")
-
-app = gr.mount_gradio_app(app, demo, path="/ui")
+    app = gr.mount_gradio_app(app, demo, path="/ui")
