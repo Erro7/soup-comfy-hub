@@ -57,8 +57,12 @@ export SHELL_BIN_DIR="${SHELL_BIN_DIR}"
 export SHELL_STATE_DIR="${SHELL_STATE_DIR}"
 export SHELL_HISTORY_DIR="${SHELL_HISTORY_DIR}"
 case ":\$PATH:" in
+  *":\$SHELL_BIN_DIR:"*) ;;
+  *) export PATH="\$SHELL_BIN_DIR:\$PATH" ;;
+esac
+case ":\$PATH:" in
   *":\$VENV_DIR/bin:"*) ;;
-  *) export PATH="\$VENV_DIR/bin:\$SHELL_BIN_DIR:\$PATH" ;;
+  *) export PATH="\$VENV_DIR/bin:\$PATH" ;;
 esac
 [ ! -f "\$VENV_DIR/bin/activate" ] || source "\$VENV_DIR/bin/activate"
 cd "\$PROJECT_DIR"
