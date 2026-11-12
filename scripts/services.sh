@@ -40,7 +40,7 @@ case "${ACTION}" in
     fi
     rm -f "${SERVICES_PID_FILE}"
     echo "STOPPED"
-    exit 1
+    exit 0
     ;;
   logs)
     mkdir -p "${LOG_DIR}"
