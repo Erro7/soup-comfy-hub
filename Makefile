@@ -7,7 +7,7 @@ SHELL := /bin/bash
 
 CMD ?= enter
 MODEL_PROFILE ?= all
-SHELL_KIND ?= auto
+SHELL_KIND ?= zsh
 CACHE_KIND ?=
 
 help:
