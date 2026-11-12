@@ -3,9 +3,18 @@
 # Portable defaults. Every value remains overridable by environment variables.
 PROJECT_DIR="${PROJECT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 if [ -f "${PROJECT_DIR}/.env" ]; then
+  # .env supplies defaults; explicit shell/container variables take precedence.
+  declare -A _runtime_env_before=()
+  while IFS='=' read -r key value; do
+    _runtime_env_before["${key}"]="${value}"
+  done < <(env)
   set -a
   source "${PROJECT_DIR}/.env"
   set +a
+  for key in "${!_runtime_env_before[@]}"; do
+    export "${key}=${_runtime_env_before[${key}]}"
+  done
+  unset _runtime_env_before key value
 fi
 WORKSPACE="${WORKSPACE:-$(dirname "${PROJECT_DIR}")}"
 DATA_DIR="${DATA_DIR:-${WORKSPACE}/soup-comfy-data}"
