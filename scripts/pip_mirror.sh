@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 # Select a PyPI index without changing the user's global pip configuration.
+# Index changes never rebuild the venv and never erase reusable package caches.
 # Precedence: explicit PIP_MIRROR > existing PIP_INDEX_URL > detected timezone.
 configure_pip_mirror() {
   local mirror="${PIP_MIRROR:-auto}"
@@ -48,8 +49,7 @@ pip_index_changed() {
 prepare_pip_cache() {
   local state_file="${1:?pip mirror state file is required}"
   if pip_index_changed "${state_file}"; then
-    echo "Clearing pip cache for the new package index..."
-    python -m pip cache purge >/dev/null 2>&1 || true
+    echo "Package index changed; keeping the existing venv and shared pip cache."
   fi
 }
 
