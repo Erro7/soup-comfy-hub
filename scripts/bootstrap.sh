@@ -100,7 +100,35 @@ if [ "${INSTALL_SOUP:-0}" = "1" ]; then
 fi
 
 sync_repository https://github.com/Comfy-Org/ComfyUI.git "${COMFY_DIR}"
-python -m pip install -r "${COMFY_DIR}/requirements.txt"
+if [ "${INSTALL_COMFY_WORKFLOW_TEMPLATES:-0}" = "1" ]; then
+  python -m pip install -r "${COMFY_DIR}/requirements.txt"
+else
+  COMFY_API_REQUIREMENTS="$(mktemp "${DATA_DIR}/comfy-api-requirements.XXXXXX")"
+  grep -vE '^[[:space:]]*comfyui-workflow-templates([=<>!~ ].*)? {
+  local repo="$1" name="$2"
+  sync_repository "${repo}" "${COMFY_DIR}/custom_nodes/${name}"
+  if [ -f "${COMFY_DIR}/custom_nodes/${name}/requirements.txt" ]; then
+    python -m pip install -r "${COMFY_DIR}/custom_nodes/${name}/requirements.txt"
+  fi
+}
+
+install_node https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git ComfyUI-VideoHelperSuite
+install_node https://github.com/city96/ComfyUI-GGUF.git ComfyUI-GGUF
+install_node https://github.com/cubiq/ComfyUI_InstantID.git ComfyUI_InstantID
+install_node https://github.com/cubiq/ComfyUI_IPAdapter_plus.git ComfyUI_IPAdapter_plus
+if [ "${INSTALL_POSE_GALLERY:-0}" = "1" ]; then
+  install_node https://github.com/anhao/ai-pose-gallery-zh.git ai-pose-gallery-zh
+fi
+
+mkdir -p "${TASK_OUTPUT_DIR}" "${PROJECT_DIR}/logs" "${COMFY_INPUT_DIR}" "${COMFY_OUTPUT_DIR}"
+touch "${DATA_DIR}/.runtime-ready"
+[ -f "${PROJECT_DIR}/.env" ] || cp "${PROJECT_DIR}/.env.example" "${PROJECT_DIR}/.env"
+echo "Persistent runtime ready at ${DATA_DIR}. Edit ${PROJECT_DIR}/.env, then run make models and make up."
+     "${COMFY_DIR}/requirements.txt" > "${COMFY_API_REQUIREMENTS}"
+  echo "Installing ComfyUI headless/API dependencies (workflow template media assets skipped)."
+  python -m pip install -r "${COMFY_API_REQUIREMENTS}"
+  rm -f "${COMFY_API_REQUIREMENTS}"
+fi
 
 install_node() {
   local repo="$1" name="$2"
