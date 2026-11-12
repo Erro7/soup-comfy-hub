@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/runtime_env.sh"
 
 ACTION="${1:-enter}"
-SHELL_KIND="${SHELL_KIND:-auto}"
+SHELL_KIND="${SHELL_KIND:-zsh}"
 CACHE_KIND="${CACHE_KIND:-}"
 OMZ_DIR="${OMZ_DIR:-${SHELL_HOME}/oh-my-zsh}"
 SHARED_ENV="${SHELL_HOME}/env.sh"
@@ -95,7 +95,7 @@ export ZSH="${OMZ_DIR}"
 export HISTFILE="${SHELL_HISTORY_DIR}/zsh_history"
 export HISTSIZE=50000
 export SAVEHIST=50000
-ZSH_THEME="${OMZ_THEME:-robbyrussell}"
+ZSH_THEME="${OMZ_THEME:-clean}"
 plugins=(git python pip)
 [ ! -f "\$ZSH/oh-my-zsh.sh" ] || source "\$ZSH/oh-my-zsh.sh"
 [ ! -f "${SHELL_HOME}/zshrc.local" ] || source "${SHELL_HOME}/zshrc.local"
@@ -269,7 +269,7 @@ case "${ACTION}" in
 Usage: scripts/shell.sh [enter|init|status|env|cache|cache-clean|doctor|update|help]
 
 Environment:
-  SHELL_KIND=auto|bash|zsh
+  SHELL_KIND=zsh|bash|auto
   CACHE_KIND=pip|uv|modelscope|huggingface|torch|npm|xdg|cuda|all
 
 Examples:
