@@ -32,6 +32,8 @@ All commands resolve the same `DATA_DIR`, `VENV_DIR`, `COMFY_DIR`, cache, logs, 
 | `make help` | List the supported command surface. |
 | `make init` | Resumable setup that reuses a compatible persistent venv, then installs ComfyUI and API dependencies. |
 | `make venv-init/status/doctor` | Create/reuse, inspect, or validate only the persistent Python environment. |
+| `make comfy-deps` | Install the minimal ComfyUI runtime after resolving PyTorch explicitly. |
+| `make comfy-deps-status` | Show the active Torch and optional workflow-template policy. |
 | `make models` | Download or resume model files; uses the existing venv or Notebook ModelScope client. |
 | `make doctor` | Validate the shared venv, API packages, nodes, models, and GPU. |
 | `make up` | Start services only; never installs packages. |
@@ -71,6 +73,15 @@ docker compose run --rm runtime bash scripts/download_models.sh
 docker compose up -d
 curl -fsS http://127.0.0.1:8000/readyz
 ```
+
+ComfyUI dependency installation is split from environment creation. The default path reuses platform-provided PyTorch and filters `torch`, `torchvision`, `torchaudio`, workflow templates, and template media assets out of the ordinary mirror install. This prevents a PyPI mirror from unexpectedly downloading a second CUDA stack. On an image that has no PyTorch, installation must be explicit:
+
+```dotenv
+COMFY_TORCH_MODE=install
+TORCH_INDEX_URL=https://download.pytorch.org/whl/cu124
+```
+
+Workflow templates are optional and use `COMFY_OPTIONAL_INDEX_URL` (official PyPI by default) only when `INSTALL_COMFY_WORKFLOW_TEMPLATES=1`.
 
 The persistent venv is keyed only by its base Python executable, exact Python version, and system-site-packages mode. Changing `PIP_MIRROR` or `PIP_INDEX_URL` does not rebuild it and does not clear the shared pip cache. Set `VENV_REBUILD=1` only for an explicit one-time rebuild.
 
