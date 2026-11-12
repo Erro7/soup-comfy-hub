@@ -3,7 +3,7 @@ SHELL := /bin/bash
 
 .PHONY: help init models models-image models-video models-custom doctor up down restart status logs smoke test lint \
         shell shell-init shell-status shell-env shell-cache shell-cache-clean \
-        shell-doctor shell-update shell-help tunnel tunnel-init tunnel-status
+        shell-doctor shell-update shell-help tunnel tunnel-init tunnel-login tunnel-create tunnel-setup tunnel-route tunnel-validate tunnel-list tunnel-info tunnel-status tunnel-service-install tunnel-service-start tunnel-service-stop tunnel-service-restart tunnel-service-status tunnel-service-uninstall
 
 CMD ?= enter
 MODEL_PROFILE ?= all
@@ -38,8 +38,13 @@ help:
 	@echo "  make shell CMD=... Unified subcommand: enter/init/status/env/cache/cache-clean/doctor/update/help"
 	@echo
 	@echo "  make tunnel-init   Install cloudflared into persistent shell storage"
-	@echo "  make tunnel        Run the configured quick or named Cloudflare tunnel"
-	@echo "  make tunnel-status Inspect tunnel mode, target and installation"
+	@echo "  make tunnel-login  Authenticate the Cloudflare CLI and persist cert.pem"
+	@echo "  make tunnel-setup TUNNEL_NAME=... TUNNEL_HOSTNAME=... TUNNEL_SERVICE=..."
+	@echo "                     Create tunnel, config.yml and DNS route through the CLI"
+	@echo "  make tunnel        Validate and run the locally managed tunnel"
+	@echo "  make tunnel-status Inspect CLI, certificate, config and tunnels"
+	@echo "  make tunnel-service-install   Install/start the official systemd service"
+	@echo "  make tunnel-service-status    Inspect the systemd service"
 	@echo
 	@echo "  make test          Run tests in the project venv"
 	@echo "  make lint          Run Ruff in the project venv"
@@ -118,8 +123,47 @@ shell-help:
 tunnel-init:
 	bash scripts/tunnel.sh init
 
+tunnel-login:
+	bash scripts/tunnel.sh login
+
+tunnel-create:
+	CLOUDFLARE_TUNNEL_NAME="$(TUNNEL_NAME)" bash scripts/tunnel.sh create
+
+tunnel-setup:
+	CLOUDFLARE_TUNNEL_NAME="$(TUNNEL_NAME)" CLOUDFLARE_TUNNEL_HOSTNAME="$(TUNNEL_HOSTNAME)" CLOUDFLARE_TUNNEL_SERVICE="$(TUNNEL_SERVICE)" bash scripts/tunnel.sh setup
+
+tunnel-route:
+	CLOUDFLARE_TUNNEL_NAME="$(TUNNEL_NAME)" CLOUDFLARE_TUNNEL_HOSTNAME="$(TUNNEL_HOSTNAME)" bash scripts/tunnel.sh route
+
+tunnel-validate:
+	bash scripts/tunnel.sh validate
+
 tunnel:
 	bash scripts/tunnel.sh run
 
+tunnel-list:
+	bash scripts/tunnel.sh list
+
+tunnel-info:
+	CLOUDFLARE_TUNNEL_NAME="$(TUNNEL_NAME)" bash scripts/tunnel.sh info
+
 tunnel-status:
 	bash scripts/tunnel.sh status
+
+tunnel-service-install:
+	bash scripts/tunnel.sh service-install
+
+tunnel-service-start:
+	bash scripts/tunnel.sh service-start
+
+tunnel-service-stop:
+	bash scripts/tunnel.sh service-stop
+
+tunnel-service-restart:
+	bash scripts/tunnel.sh service-restart
+
+tunnel-service-status:
+	bash scripts/tunnel.sh service-status
+
+tunnel-service-uninstall:
+	bash scripts/tunnel.sh service-uninstall
