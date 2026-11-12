@@ -8,6 +8,15 @@ check_file() { if [ -e "$1" ]; then echo "OK   $2"; else echo "MISS $2 -> $1"; f
 check_dir() { if [ -d "$1" ]; then echo "OK   $2"; else echo "MISS $2 -> $1"; fail=1; fi; }
 
 check_file "${VENV_DIR}/bin/python" "Python venv"
+if [ -x "${VENV_DIR}/bin/python" ]; then
+  if "${VENV_DIR}/bin/python" -c 'import fastapi, httpx, pydantic_settings' >/dev/null 2>&1; then
+    echo "OK   Gateway Python dependencies"
+  else
+    echo "MISS Gateway Python dependencies in ${VENV_DIR}"
+    fail=1
+  fi
+fi
+check_file "${DATA_DIR}/.runtime-ready" "Runtime marker"
 check_file "${COMFY_DIR}/main.py" "ComfyUI"
 check_dir "${COMFY_DIR}/custom_nodes/ComfyUI-VideoHelperSuite" "VideoHelperSuite"
 check_dir "${COMFY_DIR}/custom_nodes/ComfyUI_InstantID" "InstantID nodes"
