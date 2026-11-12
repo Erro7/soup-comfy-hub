@@ -78,6 +78,10 @@ make shell-help
 
 Docker images include the `zsh` binary; mutable shell state remains in the mounted `/data/shell` directory. On a Notebook image without zsh, `make shell-init` installs the small system package when running as root.
 
+### ComfyUI API dependency mode
+
+The default bootstrap omits `comfyui-workflow-templates` and its large media-asset packages. They only populate the Web UI Templates browser and are not required for the bundled API-format workflows. Set `INSTALL_COMFY_WORKFLOW_TEMPLATES=1` only when the complete ComfyUI template gallery is required and the selected PyPI index contains every asset package.
+
 ### Optional Gradio UI
 
 Gradio is not required by any REST endpoint. Enable it only when needed with `INSTALL_GRADIO_UI=1 make init` and `ENABLE_GRADIO_UI=1`.
