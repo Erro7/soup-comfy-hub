@@ -29,3 +29,30 @@ export WORKFLOW_DIR="${WORKFLOW_DIR:-${PROJECT_DIR}/workflows}"
 export SOUP_WORKSPACE="${SOUP_WORKSPACE:-${PROJECT_DIR}/soup_workspace}"
 export TASK_OUTPUT_DIR="${TASK_OUTPUT_DIR:-${DATA_DIR}/outputs}"
 export TASK_DB_PATH="${TASK_DB_PATH:-${DATA_DIR}/outputs/tasks.sqlite3}"
+
+export LOG_DIR="${LOG_DIR:-${DATA_DIR}/logs}"
+export SERVICES_PID_FILE="${SERVICES_PID_FILE:-${LOG_DIR}/services.pid}"
+export SHELL_HOME="${SHELL_HOME:-${DATA_DIR}/shell}"
+
+runtime_require_venv() {
+  if [ ! -x "${VENV_DIR}/bin/python" ]; then
+    echo "Persistent Python environment is missing: ${VENV_DIR}" >&2
+    echo "Run 'make init' once before using this command." >&2
+    return 1
+  fi
+}
+
+runtime_activate_venv() {
+  runtime_require_venv
+  # shellcheck disable=SC1091
+  source "${VENV_DIR}/bin/activate"
+  export PATH="${VENV_DIR}/bin:${PATH}"
+}
+
+runtime_require_comfy() {
+  if [ ! -f "${COMFY_DIR}/main.py" ]; then
+    echo "ComfyUI is missing: ${COMFY_DIR}" >&2
+    echo "Run 'make init' once before using this command." >&2
+    return 1
+  fi
+}
