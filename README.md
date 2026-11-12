@@ -30,7 +30,8 @@ All commands resolve the same `DATA_DIR`, `VENV_DIR`, `COMFY_DIR`, cache, logs, 
 | Command | Contract |
 |---|---|
 | `make help` | List the supported command surface. |
-| `make init` | One-time/resumable persistent venv, ComfyUI, node, and API dependency setup. |
+| `make init` | Resumable setup that reuses a compatible persistent venv, then installs ComfyUI and API dependencies. |
+| `make venv-init/status/doctor` | Create/reuse, inspect, or validate only the persistent Python environment. |
 | `make models` | Download or resume model files; uses the existing venv or Notebook ModelScope client. |
 | `make doctor` | Validate the shared venv, API packages, nodes, models, and GPU. |
 | `make up` | Start services only; never installs packages. |
@@ -70,6 +71,8 @@ docker compose run --rm runtime bash scripts/download_models.sh
 docker compose up -d
 curl -fsS http://127.0.0.1:8000/readyz
 ```
+
+The persistent venv is keyed only by its base Python executable, exact Python version, and system-site-packages mode. Changing `PIP_MIRROR` or `PIP_INDEX_URL` does not rebuild it and does not clear the shared pip cache. Set `VENV_REBUILD=1` only for an explicit one-time rebuild.
 
 The flattened shell is independent from ComfyUI and the Python venv. `make shell-init` creates project-scoped pip/npm configuration, persistent histories, cache paths and shared Bash/zsh exports first; when a project venv later exists it is activated automatically. It never writes global pip or npm configuration.
 
