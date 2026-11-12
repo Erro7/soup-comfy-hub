@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
-.PHONY: help init models models-image models-video models-custom doctor up down restart status logs smoke test test-tools test-shell lint \
+.PHONY: help init venv-init venv-status venv-doctor models models-image models-video models-custom doctor up down restart status logs smoke test test-tools test-shell test-venv lint \
         shell shell-init shell-status shell-env shell-cache shell-cache-clean \
         shell-doctor shell-update shell-help tools-status cloudflared-install cloudflared-status tunnel tunnel-init tunnel-status tunnel-service-install tunnel-service-start tunnel-service-stop tunnel-service-restart tunnel-service-status tunnel-service-uninstall
 
@@ -14,7 +14,10 @@ SHELL_COMMAND ?=
 help:
 	@echo "Soup-Comfy-Hub commands"
 	@echo
-	@echo "  make init          One-time persistent venv, ComfyUI and node setup"
+	@echo "  make init          Resumable project setup; reuses a compatible persistent venv"
+	@echo "  make venv-init     Create/reuse only the persistent Python environment"
+	@echo "  make venv-status   Show base Python and venv compatibility state"
+	@echo "  make venv-doctor   Validate the persistent Python environment"
 	@echo "  make models        Download/resume all model profiles"
 	@echo "  make models-image  Download only SDXL/InstantID/IPAdapter models"
 	@echo "  make models-video  Download only Wan video models"
@@ -52,6 +55,15 @@ help:
 
 init:
 	bash scripts/bootstrap.sh
+
+venv-init:
+	bash scripts/venv.sh init
+
+venv-status:
+	@bash scripts/venv.sh status
+
+venv-doctor:
+	@bash scripts/venv.sh doctor
 
 models:
 	MODEL_PROFILE="$(MODEL_PROFILE)" bash scripts/download_models.sh
@@ -92,12 +104,16 @@ test:
 	bash scripts/venv_exec.sh python -m pytest -q
 	bash tests/test_tools.sh
 	bash tests/test_shell_env.sh
+	bash tests/test_venv.sh
 
 test-tools:
 	bash tests/test_tools.sh
 
 test-shell:
 	bash tests/test_shell_env.sh
+
+test-venv:
+	bash tests/test_venv.sh
 
 lint:
 	bash scripts/venv_exec.sh python -m ruff check gateway studio_frontend tests
