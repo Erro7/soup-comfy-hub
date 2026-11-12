@@ -35,7 +35,7 @@ configure_pip_mirror() {
 }
 
 pip_environment_signature() {
-  printf 'venv-v2:%s' "${PIP_INDEX_URL}"
+  printf 'venv-v3:%s:%s' "${PIP_INDEX_URL}" "${PIP_ENV_FLAVOR:-isolated}"
 }
 
 pip_index_changed() {
