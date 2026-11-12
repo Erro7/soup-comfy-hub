@@ -15,14 +15,9 @@ resolve_github_url() {
     timezone="$(tr -d '[:space:]' < /etc/timezone)"
   fi
   if [[ "${prefix}" == "auto" ]]; then
-    case "${timezone}" in
-      Asia/Shanghai|Asia/Chongqing|Asia/Harbin|Asia/Urumqi)
-        prefix="https://ghfast.top/"
-        ;;
-      *)
-        prefix=""
-        ;;
-    esac
+    # File-download proxies such as ghfast.top do not implement Git Smart HTTP
+    # and must never be used as a git clone remote.
+    prefix=""
   elif [[ "${prefix}" == "off" || "${prefix}" == "direct" ]]; then
     prefix=""
   fi
