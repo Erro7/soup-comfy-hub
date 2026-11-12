@@ -11,6 +11,11 @@ check_file "${VENV_DIR}/bin/python" "Python venv"
 if [ -x "${VENV_DIR}/bin/python" ]; then
   if "${VENV_DIR}/bin/python" -c 'import fastapi, httpx, pydantic_settings' >/dev/null 2>&1; then
     echo "OK   Gateway Python dependencies"
+    "${VENV_DIR}/bin/python" - <<'PY'
+import torch
+print(f"OK   torch={torch.__version__} cuda={torch.version.cuda}")
+print(f"     torch_path={torch.__file__}")
+PY
   else
     echo "MISS Gateway Python dependencies in ${VENV_DIR}"
     fail=1
