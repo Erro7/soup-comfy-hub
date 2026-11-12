@@ -63,10 +63,16 @@ export TORCH_HOME="${TORCH_HOME}"
 export NPM_CONFIG_CACHE="${NPM_CONFIG_CACHE}"
 export XDG_CACHE_HOME="${XDG_CACHE_HOME}"
 export CUDA_CACHE_PATH="${CUDA_CACHE_PATH}"
+export TOOLS_HOME="${TOOLS_HOME}"
+export TOOLS_BIN_DIR="${TOOLS_BIN_DIR}"
 export SHELL_HOME="${SHELL_HOME}"
 export SHELL_BIN_DIR="${SHELL_BIN_DIR}"
 export SHELL_STATE_DIR="${SHELL_STATE_DIR}"
 export SHELL_HISTORY_DIR="${SHELL_HISTORY_DIR}"
+case ":\$PATH:" in
+  *":\$TOOLS_BIN_DIR:"*) ;;
+  *) export PATH="\$TOOLS_BIN_DIR:\$PATH" ;;
+esac
 case ":\$PATH:" in
   *":\$SHELL_BIN_DIR:"*) ;;
   *) export PATH="\$SHELL_BIN_DIR:\$PATH" ;;
@@ -170,7 +176,7 @@ show_env() {
   local names=(
     PROJECT_DIR DATA_DIR COMFY_DIR VENV_DIR CACHE_DIR PIP_CACHE_DIR UV_CACHE_DIR
     MODELSCOPE_CACHE MODELSCOPE_CACHE_HOME HF_HOME HUGGINGFACE_HUB_CACHE TORCH_HOME
-    NPM_CONFIG_CACHE XDG_CACHE_HOME CUDA_CACHE_PATH SHELL_HOME SHELL_BIN_DIR
+    NPM_CONFIG_CACHE XDG_CACHE_HOME CUDA_CACHE_PATH TOOLS_HOME TOOLS_BIN_DIR SHELL_HOME SHELL_BIN_DIR
     SHELL_STATE_DIR SHELL_HISTORY_DIR
   )
   local name
@@ -187,6 +193,7 @@ show_status() {
   printf '%-22s %s\n' "venv" "${VENV_DIR}"
   printf '%-22s %s\n' "shell home" "${SHELL_HOME}"
   printf '%-22s %s\n' "cache root" "${CACHE_DIR}"
+  printf '%-22s %s\n' "tools home" "${TOOLS_HOME}"
   [ -x "${VENV_DIR}/bin/python" ] && echo "OK   shared Python venv" || echo "MISS shared Python venv (make init)"
   [ -f "${SHARED_ENV}" ] && echo "OK   shared Bash/zsh environment" || echo "MISS shared environment (make shell-init)"
   command -v bash >/dev/null 2>&1 && echo "OK   bash: $(command -v bash)" || echo "MISS bash"
