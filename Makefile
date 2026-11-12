@@ -1,11 +1,12 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
-.PHONY: help init models doctor up down restart status logs smoke test lint \
+.PHONY: help init models models-image models-video models-custom doctor up down restart status logs smoke test lint \
         shell shell-init shell-status shell-env shell-cache shell-cache-clean \
         shell-doctor shell-update shell-help
 
 CMD ?= enter
+MODEL_PROFILE ?= all
 SHELL_KIND ?= auto
 CACHE_KIND ?=
 
@@ -13,7 +14,10 @@ help:
 	@echo "Soup-Comfy-Hub commands"
 	@echo
 	@echo "  make init          One-time persistent venv, ComfyUI and node setup"
-	@echo "  make models        Download/resume models into persistent storage"
+	@echo "  make models        Download/resume all model profiles"
+	@echo "  make models-image  Download only SDXL/InstantID/IPAdapter models"
+	@echo "  make models-video  Download only Wan video models"
+	@echo "  make models-custom MODEL_ID=... MODEL_FILE=... MODEL_DIR=..."
 	@echo "  make doctor        Validate venv, ComfyUI, nodes, models and GPU"
 	@echo "  make up            Start ComfyUI and API in the foreground"
 	@echo "  make down          Stop the exact service supervisor from its PID file"
@@ -40,10 +44,19 @@ init:
 	bash scripts/bootstrap.sh
 
 models:
-	bash scripts/download_models.sh
+	MODEL_PROFILE="$(MODEL_PROFILE)" bash scripts/download_models.sh
+
+models-image:
+	MODEL_PROFILE=image bash scripts/download_models.sh
+
+models-video:
+	MODEL_PROFILE=video bash scripts/download_models.sh
+
+models-custom:
+	MODEL_PROFILE=custom MODEL_ID="$(MODEL_ID)" MODEL_FILE="$(MODEL_FILE)" MODEL_DIR="$(MODEL_DIR)" MODEL_REVISION="$(MODEL_REVISION)" bash scripts/download_models.sh
 
 doctor:
-	bash scripts/doctor.sh
+	MODEL_PROFILE="$(MODEL_PROFILE)" MODEL_FILE="$(MODEL_FILE)" MODEL_DIR="$(MODEL_DIR)" bash scripts/doctor.sh
 
 up:
 	bash scripts/start_services.sh
