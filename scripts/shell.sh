@@ -145,14 +145,16 @@ ensure_zsh() {
 
   echo "zsh is missing; installing it with the platform package manager..."
   if command -v apt-get >/dev/null 2>&1; then
-    shell_run_privileged env DEBIAN_FRONTEND=noninteractive apt-get update -qq &&
-      shell_run_privileged env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends zsh
+    if ! shell_run_privileged env DEBIAN_FRONTEND=noninteractive apt-get update -qq ||
+       ! shell_run_privileged env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends zsh; then
+      echo "WARN apt could not install zsh." >&2
+    fi
   elif command -v dnf >/dev/null 2>&1; then
-    shell_run_privileged dnf install -y -q zsh
+    shell_run_privileged dnf install -y -q zsh || echo "WARN dnf could not install zsh." >&2
   elif command -v yum >/dev/null 2>&1; then
-    shell_run_privileged yum install -y -q zsh
+    shell_run_privileged yum install -y -q zsh || echo "WARN yum could not install zsh." >&2
   elif command -v apk >/dev/null 2>&1; then
-    shell_run_privileged apk add --no-cache zsh
+    shell_run_privileged apk add --no-cache zsh || echo "WARN apk could not install zsh." >&2
   else
     echo "WARN no supported package manager can install zsh." >&2
   fi
