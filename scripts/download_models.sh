@@ -112,15 +112,22 @@ download_image_models() {
         link_model "${cache}/${source}" "${COMFY_DIR}/models/${target}"
         ;;
       tree)
-        ms_snapshot "${model_repo}" "${cache}" "${source}"
-        downloaded_dir="$(find "${cache}" -type d -name "$(basename "${target}")" -print -quit)"
+        # ModelScope glob semantics differ between client versions. Download the
+        # repository snapshot for directory models, then locate the named tree.
+        # Existing files in the persistent snapshot cache are reused/resumed.
+        ms_snapshot "${model_repo}" "${cache}"
+        downloaded_dir="$(find "${cache}" -type d -name "${source}" -print -quit)"
         [ -n "${downloaded_dir}" ] || {
-          echo "Model directory $(basename "${target}") was not found in ${model_repo}" >&2
+          echo "Model directory ${source} was not found in ${model_repo}" >&2
           return 1
         }
+        if ! find "${downloaded_dir}" -type f -name '*.onnx' -print -quit | grep -q .; then
+          echo "Model directory ${source} contains no ONNX files: ${downloaded_dir}" >&2
+          return 1
+        fi
         mkdir -p "$(dirname "${COMFY_DIR}/models/${target}")"
-        ln -sfn "${downloaded_dir}" "${COMFY_DIR}/models/${target}"
-        echo "Linked $(basename "${target}") -> ${COMFY_DIR}/models/${target}"
+        ln -sfnT "${downloaded_dir}" "${COMFY_DIR}/models/${target}"
+        echo "Linked ${source} -> ${COMFY_DIR}/models/${target}"
         ;;
       *) echo "Unsupported image manifest kind: ${kind}" >&2; return 2 ;;
     esac
