@@ -78,7 +78,7 @@ docker compose up -d
 curl -fsS http://127.0.0.1:8000/readyz
 ```
 
-ComfyUI dependency installation is split from environment creation. Domestic mirrors do not always carry Comfy-published wheels. `comfyui-frontend-package`, `comfyui-embedded-docs`, `comfy-aimdo`, and `comfy-kitchen` are therefore installed with `--no-deps` from `COMFY_PACKAGE_INDEX_URL` (official PyPI by default); all ordinary dependencies continue to use the selected mirror. The default path reuses platform-provided PyTorch and filters `torch`, `torchvision`, `torchaudio`, workflow templates, and template media assets out of the ordinary mirror install. This prevents a PyPI mirror from unexpectedly downloading a second CUDA stack. On an image that has no PyTorch, installation must be explicit:
+ComfyUI dependency installation is split from environment creation. Domestic mirrors do not always carry Comfy-published wheels. `comfyui-frontend-package`, `comfyui-embedded-docs`, `comfy-aimdo`, and `comfy-kitchen` are therefore installed with `--no-deps`. In China timezones, `COMFY_PACKAGE_INDEX_URL=auto` tries the selected mirror, Tencent, USTC, and SJTU before falling back to official PyPI; all ordinary dependencies continue to use the selected mirror. The default path reuses platform-provided PyTorch and filters `torch`, `torchvision`, `torchaudio`, workflow templates, and template media assets out of the ordinary mirror install. This prevents a PyPI mirror from unexpectedly downloading a second CUDA stack. On an image that has no PyTorch, installation must be explicit:
 
 ```dotenv
 COMFY_TORCH_MODE=install
