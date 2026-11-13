@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
-.PHONY: help init init-core init-image init-video init-all comfy-profile-status venv-init venv-status venv-doctor comfy-deps comfy-deps-status models models-image models-video models-custom doctor doctor-image validate-workflows up down restart status logs smoke test-core-runtime test test-tools test-shell test-venv test-comfy-deps test-comfy-profile test-download test-environment-mode lint \
+.PHONY: help init init-core init-image init-video init-all comfy-profile-status venv-init venv-status venv-doctor comfy-deps comfy-deps-status models models-image models-video models-custom doctor doctor-image validate-workflows up down restart status logs smoke test-core-runtime test-image-runtime test test-tools test-shell test-venv test-comfy-deps test-comfy-profile test-download test-environment-mode lint \
         shell shell-init shell-status shell-env shell-cache shell-cache-clean \
         shell-doctor shell-update shell-help tools-status cloudflared-install cloudflared-status tunnel tunnel-init tunnel-status tunnel-service-install tunnel-service-start tunnel-service-stop tunnel-service-restart tunnel-service-status tunnel-service-uninstall
 
@@ -11,6 +11,11 @@ MODEL_PROFILE ?= none
 SHELL_KIND ?= zsh
 CACHE_KIND ?=
 SHELL_COMMAND ?=
+IMAGE_FACE ?=
+IMAGE_OUTFIT ?=
+IMAGE_POSE ?=
+IMAGE_OUTPUT ?=
+IMAGE_PROMPT ?=
 
 help:
 	@echo "Soup-Comfy-Hub commands"
@@ -40,6 +45,7 @@ help:
 	@echo "  make logs          Follow ComfyUI and gateway logs"
 	@echo "  make smoke         Test an already-running Gateway -> ComfyUI path"
 	@echo "  make test-core-runtime   Start if needed and run the Step 5 core acceptance"
+	@echo "  make test-image-runtime IMAGE_FACE=... IMAGE_OUTFIT=... IMAGE_POSE=..."
 	@echo
 	@echo "  make shell         Enter persistent zsh using the same project venv"
 	@echo "  make shell-init    Explicitly initialize zsh and Oh My Zsh"
@@ -139,6 +145,11 @@ smoke:
 
 test-core-runtime:
 	bash scripts/test_core_runtime.sh
+
+test-image-runtime:
+	IMAGE_TEST_FACE="$(IMAGE_FACE)" IMAGE_TEST_OUTFIT="$(IMAGE_OUTFIT)" \
+	IMAGE_TEST_POSE="$(IMAGE_POSE)" IMAGE_TEST_OUTPUT="$(IMAGE_OUTPUT)" \
+	IMAGE_TEST_PROMPT="$(IMAGE_PROMPT)" bash scripts/test_image_runtime.sh
 
 test:
 	bash scripts/venv_exec.sh python -m pytest -q
