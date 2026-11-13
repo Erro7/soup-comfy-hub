@@ -117,16 +117,14 @@ install_node() {
   fi
 }
 
-install_node https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git ComfyUI-VideoHelperSuite
-install_node https://github.com/city96/ComfyUI-GGUF.git ComfyUI-GGUF
-install_node https://github.com/cubiq/ComfyUI_InstantID.git ComfyUI_InstantID
-install_node https://github.com/cubiq/ComfyUI_IPAdapter_plus.git ComfyUI_IPAdapter_plus
-if [ "${INSTALL_POSE_GALLERY:-0}" = "1" ]; then
-  install_node https://github.com/anhao/ai-pose-gallery-zh.git ai-pose-gallery-zh
-fi
+while IFS='|' read -r node_repo node_name; do
+  [ -n "${node_repo}" ] || continue
+  install_node "${node_repo}" "${node_name}"
+done < <(bash "${PROJECT_DIR}/scripts/comfy_profile.sh" nodes)
+bash "${PROJECT_DIR}/scripts/comfy_profile.sh" mark
 
 mkdir -p "${COMFY_INPUT_DIR}" "${COMFY_OUTPUT_DIR}" "${TASK_OUTPUT_DIR}" "${LOG_DIR}"
 touch "${DATA_DIR}/.runtime-ready"
 [ -f "${PROJECT_DIR}/.env" ] || cp "${PROJECT_DIR}/.env.example" "${PROJECT_DIR}/.env"
-echo "Persistent runtime ready at ${DATA_DIR}."
+echo "Persistent runtime ready at ${DATA_DIR} (ComfyUI profile: ${COMFY_PROFILE:-core})."
 echo "Next: make models && make doctor && make up"
