@@ -30,7 +30,11 @@ All commands resolve the same `DATA_DIR`, `VENV_DIR`, `COMFY_DIR`, cache, logs, 
 | Command | Contract |
 |---|---|
 | `make help` | List the supported command surface. |
-| `make init` | Resumable setup that reuses a compatible persistent venv, then installs ComfyUI and API dependencies. |
+| `make init` / `make init-core` | Install the minimal ComfyUI + Gateway core without image/video custom nodes. |
+| `make init-image` | Incrementally add InstantID and IPAdapter image nodes. |
+| `make init-video` | Incrementally add VideoHelperSuite and GGUF video nodes. |
+| `make init-all` | Incrementally install both image and video profiles. |
+| `make comfy-profile-status` | Show requested and already-installed profiles. |
 | `make venv-init/status/doctor` | Create/reuse, inspect, or validate only the persistent Python environment. |
 | `make comfy-deps` | Install the minimal ComfyUI runtime after resolving PyTorch explicitly. |
 | `make comfy-deps-status` | Show the active Torch and optional workflow-template policy. |
@@ -116,6 +120,31 @@ make up            # supervise ComfyUI, API and tunnel together
 On a normal Linux host with systemd, `make tunnel-service-install` delegates to Cloudflare's official `cloudflared service install <TOKEN>` flow and enables the service. ModelScope/DSW containers do not provide a persistent systemd instance, so use the project supervisor through `make up/down/status` there.
 
 The gateway binds to `127.0.0.1:8000`; Cloudflare should be the only public ingress. ComfyUI binds to loopback and is never exposed directly.
+
+## ComfyUI installation profiles
+
+The default is API-first and intentionally small:
+
+```bash
+make init-core
+make doctor
+make up
+make smoke
+```
+
+Image and video support are incremental and keep the same venv, ComfyUI checkout, caches, API, and persistent data:
+
+```bash
+make init-image
+COMFY_PROFILE=image make comfy-profile-status
+COMFY_PROFILE=image MODEL_PROFILE=image make doctor
+
+make init-video
+COMFY_PROFILE=video make comfy-profile-status
+COMFY_PROFILE=video MODEL_PROFILE=video make doctor
+```
+
+Profile installation never downloads model weights. Model downloads remain separate and resumable.
 
 ## Selective model downloads
 
