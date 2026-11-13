@@ -99,6 +99,8 @@ The root `Dockerfile` is the lightweight ModelScope Studio reverse proxy and lis
 
 Cloudflared is a standalone tool and does not depend on ComfyUI, Python, the venv, zsh, or Oh My Zsh. It is installed by `make init` when `INSTALL_CLOUDFLARED=1`, or explicitly with `make cloudflared-install`. It is not required in the image and does not need root.
 
+For GitHub release binaries, China timezones automatically use the configured single-file accelerator (default `https://ghfast.top/`). Accelerator failure falls back to the original GitHub URL. This policy is intentionally separate from `GITHUB_MIRROR_PREFIX`: file-only proxies are never used for Git clone.
+
 The writable tool path priority is: `TOOLS_HOME` override, `DATA_DIR/tools` (for example ModelScope's persistent workspace), the user's XDG data directory, then the project-local `.tools` fallback. The shared Bash/zsh environment adds its `bin` directory to `PATH`.
 
 The connection uses a remotely managed Cloudflare Tunnel token; hostname routes and origin services are configured in the Cloudflare dashboard.
