@@ -126,6 +126,46 @@ EOF
   touch "${SHELL_HISTORY_DIR}/bash_history" "${SHELL_HISTORY_DIR}/zsh_history"
 }
 
+shell_run_privileged() {
+  if [ "$(id -u)" -eq 0 ]; then
+    "$@"
+  elif command -v sudo >/dev/null 2>&1; then
+    sudo "$@"
+  else
+    return 126
+  fi
+}
+
+ensure_zsh() {
+  command -v zsh >/dev/null 2>&1 && return 0
+  [ "${INSTALL_ZSH:-auto}" != 0 ] || {
+    echo "INFO zsh installation disabled; Bash mode remains available."
+    return 0
+  }
+
+  echo "zsh is missing; installing it with the platform package manager..."
+  if command -v apt-get >/dev/null 2>&1; then
+    shell_run_privileged env DEBIAN_FRONTEND=noninteractive apt-get update -qq &&
+      shell_run_privileged env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends zsh
+  elif command -v dnf >/dev/null 2>&1; then
+    shell_run_privileged dnf install -y -q zsh
+  elif command -v yum >/dev/null 2>&1; then
+    shell_run_privileged yum install -y -q zsh
+  elif command -v apk >/dev/null 2>&1; then
+    shell_run_privileged apk add --no-cache zsh
+  else
+    echo "WARN no supported package manager can install zsh." >&2
+  fi
+
+  if command -v zsh >/dev/null 2>&1; then
+    echo "Installed zsh: $(command -v zsh)"
+    return 0
+  fi
+  echo "WARN zsh is still unavailable (root/sudo may be required); Bash is ready." >&2
+  [ "${REQUIRE_ZSH:-0}" != 1 ] || return 1
+  return 0
+}
+
 install_omz() {
   if [ "${INSTALL_OMZ:-1}" != 1 ]; then
     return 0
@@ -150,6 +190,7 @@ init_shell() {
   ensure_directories
   detect_platform
   write_package_configs
+  ensure_zsh
   write_shared_env
   write_profiles
   install_omz
@@ -228,7 +269,7 @@ show_status() {
   [ -f "${PIP_CONFIG_FILE}" ] && echo "OK   persistent pip config" || echo "MISS persistent pip config"
   [ -f "${NPM_CONFIG_USERCONFIG}" ] && echo "OK   persistent npm config" || echo "MISS persistent npm config"
   command -v bash >/dev/null 2>&1 && echo "OK   bash: $(command -v bash)" || echo "MISS bash"
-  command -v zsh >/dev/null 2>&1 && echo "OK   zsh: $(command -v zsh)" || echo "MISS zsh"
+  command -v zsh >/dev/null 2>&1 && echo "OK   zsh: $(command -v zsh)" || echo "MISS zsh (rerun make shell-init with root/sudo)"
   [ -f "${OMZ_DIR}/oh-my-zsh.sh" ] && echo "OK   Oh My Zsh" || echo "INFO Oh My Zsh not installed"
 }
 
