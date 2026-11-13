@@ -3,6 +3,7 @@ set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/runtime_env.sh"
+source "${SCRIPT_DIR}/lib/download.sh"
 
 MODEL_PROFILE="${MODEL_PROFILE:-all}"
 WAN_REPO="${WAN_REPO:-Comfy-Org/Wan_2.1_ComfyUI_repackaged}"
@@ -101,7 +102,7 @@ download_image_models() {
   [ -f "${manifest}" ] || { echo "Image model manifest is missing: ${manifest}" >&2; return 1; }
   echo "Downloading image profile from ${manifest}"
 
-  local kind model_repo source target cache downloaded_dir
+  local kind model_repo source target cache downloaded_dir archive_file extract_root expected_sha actual_sha
   while IFS='|' read -r kind model_repo source target; do
     [ -n "${kind}" ] || continue
     case "${kind}" in \#*) continue ;; esac
@@ -128,6 +129,66 @@ download_image_models() {
         mkdir -p "$(dirname "${COMFY_DIR}/models/${target}")"
         ln -sfnT "${downloaded_dir}" "${COMFY_DIR}/models/${target}"
         echo "Linked ${source} -> ${COMFY_DIR}/models/${target}"
+        ;;
+      archive)
+        if [ -d "${COMFY_DIR}/models/${target}" ] &&
+           find "${COMFY_DIR}/models/${target}" -type f -name '*.onnx' -print -quit | grep -q .; then
+          echo "Reusing extracted model directory: ${COMFY_DIR}/models/${target}"
+          continue
+        fi
+        archive_file="${CACHE_DIR}/model-archives/$(basename "${model_repo}")"
+        expected_sha="${ANTELOPEV2_SHA256:-8e182f14fc6e80b3bfa375b33eb6cff7ee05d8ef7633e738d1c89021dcf0c5c5}"
+        if [ -f "${archive_file}" ]; then
+          actual_sha="$("${VENV_DIR}/bin/python" - "${archive_file}" <<'PY'
+import hashlib
+import sys
+print(hashlib.sha256(open(sys.argv[1], "rb").read()).hexdigest())
+PY
+)"
+          if [ "${actual_sha}" != "${expected_sha}" ]; then
+            echo "Cached archive checksum mismatch; downloading it again." >&2
+            rm -f "${archive_file}"
+          fi
+        fi
+        if [ ! -f "${archive_file}" ]; then
+          download_atomic "${model_repo}" "${archive_file}" 0644
+        fi
+        actual_sha="$("${VENV_DIR}/bin/python" - "${archive_file}" <<'PY'
+import hashlib
+import sys
+print(hashlib.sha256(open(sys.argv[1], "rb").read()).hexdigest())
+PY
+)"
+        [ "${actual_sha}" = "${expected_sha}" ] || {
+          echo "Archive checksum mismatch: ${archive_file}" >&2
+          return 1
+        }
+        extract_root="${MODEL_CACHE_ROOT}/archives/$(basename "${model_repo}" .zip)"
+        rm -rf "${extract_root}.extracting"
+        mkdir -p "${extract_root}.extracting"
+        "${VENV_DIR}/bin/python" - "${archive_file}" "${extract_root}.extracting" <<'PY'
+import sys
+import zipfile
+from pathlib import Path
+archive, target = map(Path, sys.argv[1:])
+root = target.resolve()
+with zipfile.ZipFile(archive) as bundle:
+    for member in bundle.infolist():
+        destination = (target / member.filename).resolve()
+        if root not in destination.parents and destination != root:
+            raise SystemExit(f"unsafe archive member: {member.filename}")
+    bundle.extractall(target)
+PY
+        rm -rf "${extract_root}"
+        mv "${extract_root}.extracting" "${extract_root}"
+        downloaded_dir="$(find "${extract_root}" -type d -name "${source}" -print -quit)"
+        [ -n "${downloaded_dir}" ] || { echo "${source} was not found in archive" >&2; return 1; }
+        find "${downloaded_dir}" -type f -name '*.onnx' -print -quit | grep -q . || {
+          echo "${source} contains no ONNX files" >&2; return 1;
+        }
+        mkdir -p "$(dirname "${COMFY_DIR}/models/${target}")"
+        ln -sfnT "${downloaded_dir}" "${COMFY_DIR}/models/${target}"
+        echo "Extracted and linked ${source} -> ${COMFY_DIR}/models/${target}"
         ;;
       *) echo "Unsupported image manifest kind: ${kind}" >&2; return 2 ;;
     esac
