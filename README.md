@@ -25,7 +25,7 @@ Required video anchors: `LOAD_FIRST_FRAME`, `PROMPT_POSITIVE`, `PROMPT_NEGATIVE`
 
 ## Make command contract
 
-All commands resolve the same `DATA_DIR`, `VENV_DIR`, `COMFY_DIR`, cache, logs, and PID file through `scripts/runtime_env.sh`. Every `make init-*` profile initializes the persistent Bash/zsh foundation by default, including Oh My Zsh, histories, pip/npm configuration, package/model caches and standalone tool paths. If zsh is absent, initialization installs it with apt/dnf/yum/apk when root or sudo is available; non-privileged platforms retain the Bash fallback unless `REQUIRE_ZSH=1`. Set `INITIALIZE_SHELL=0` only for non-interactive image builds. Only explicit initialization commands may install or update software.
+All commands resolve the same `DATA_DIR`, `VENV_DIR`, `COMFY_DIR`, cache, logs, and PID file through `scripts/runtime_env.sh`. Every `make init-*` profile initializes the persistent Bash/zsh foundation by default, including Oh My Zsh, histories, pip/npm configuration, package/model caches and standalone tool paths. ModelScope and plain-container modes persist a relocatable static zsh under `TOOLS_HOME`; Docker build and ordinary Linux modes may use the system package. Re-entry and container restart reuse the persistent binary. Unsupported platforms retain the system-package/Bash fallback unless `REQUIRE_ZSH=1`. Set `INITIALIZE_SHELL=0` only for non-interactive image builds. Only explicit initialization commands may install or update software.
 
 | Command | Contract |
 |---|---|
@@ -179,7 +179,7 @@ The command starts temporary services only when needed, submits an authenticated
 
 Model downloads are resumable and prefer the ModelScope library preinstalled by supported Notebook images. The downloader does not install ModelScope into the project venv unless `INSTALL_MODELSCOPE_CLIENT=1` is explicitly set.
 
-The image profile is declared in `config/model-profiles/image.tsv`. That manifest is shared by the downloader, Doctor, and workflow validator, so model filenames and ComfyUI paths cannot silently drift. Directory-based assets such as InsightFace `antelopev2` use a resumable repository snapshot because ModelScope glob behavior differs across client versions; Doctor verifies that the linked directory contains ONNX files.
+The image profile is declared in `config/model-profiles/image.tsv`. That manifest is shared by the downloader, Doctor, and workflow validator, so model filenames and ComfyUI paths cannot silently drift. InsightFace `antelopev2` uses the official ZIP asset with persistent caching, SHA-256 verification, safe extraction and idempotent reuse; Doctor verifies that the linked directory contains ONNX files.
 
 ```bash
 make init-image
