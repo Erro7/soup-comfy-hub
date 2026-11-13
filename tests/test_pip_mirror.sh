@@ -26,6 +26,15 @@ PIP_MIRROR=aliyun
 configure_pip_mirror
 [[ "${PIP_INDEX_URL}" == "https://mirrors.aliyun.com/pypi/simple/" ]]
 
+unset PIP_INDEX_URL
+MODELSCOPE_ENVIRONMENT=1
+export MODELSCOPE_ENVIRONMENT
+TZ=Asia/Shanghai
+PIP_MIRROR=auto
+configure_pip_mirror
+[[ "${PIP_INDEX_URL}" == "https://mirrors.cloud.aliyuncs.com/pypi/simple" ]]
+unset MODELSCOPE_ENVIRONMENT
+
 TEMP_ROOT="$(mktemp -d)"
 trap 'rm -rf "${TEMP_ROOT}"' EXIT
 STATE_FILE="${TEMP_ROOT}/index-state"
