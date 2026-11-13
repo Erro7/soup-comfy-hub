@@ -140,9 +140,7 @@ The default is API-first and intentionally small:
 
 ```bash
 make init-core
-make doctor
-make up
-make smoke
+make test-core-runtime
 ```
 
 Image and video support are incremental and keep the same venv, ComfyUI checkout, caches, API, and persistent data:
@@ -158,6 +156,8 @@ COMFY_PROFILE=video MODEL_PROFILE=video make doctor
 ```
 
 Profile installation never downloads model weights. Model downloads remain separate and resumable.
+
+`make test-core-runtime` is the Step 5 acceptance test. It validates the core installation, starts ComfyUI and Gateway only when needed, checks local readiness plus required OpenAPI routes, and stops only services started by the test. Existing services are reused and left running.
 
 ## Selective model downloads
 
