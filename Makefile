@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
-.PHONY: help init init-core init-image init-video init-all comfy-profile-status venv-init venv-status venv-doctor comfy-deps comfy-deps-status models models-image models-video models-custom doctor up down restart status logs smoke test test-tools test-shell test-venv test-comfy-deps test-comfy-profile lint \
+.PHONY: help init init-core init-image init-video init-all comfy-profile-status venv-init venv-status venv-doctor comfy-deps comfy-deps-status models models-image models-video models-custom doctor doctor-image validate-workflows up down restart status logs smoke test test-tools test-shell test-venv test-comfy-deps test-comfy-profile lint \
         shell shell-init shell-status shell-env shell-cache shell-cache-clean \
         shell-doctor shell-update shell-help tools-status cloudflared-install cloudflared-status tunnel tunnel-init tunnel-status tunnel-service-install tunnel-service-start tunnel-service-stop tunnel-service-restart tunnel-service-status tunnel-service-uninstall
 
@@ -30,7 +30,9 @@ help:
 	@echo "  make models-image  Download only SDXL/InstantID/IPAdapter models"
 	@echo "  make models-video  Download only Wan video models"
 	@echo "  make models-custom MODEL_ID=... MODEL_FILE=... MODEL_DIR=..."
-	@echo "  make doctor        Validate venv, ComfyUI, nodes, models and GPU"
+	@echo "  make doctor        Validate the core profile without requiring model weights"
+	@echo "  make doctor-image  Validate image nodes, manifest and downloaded image models"
+	@echo "  make validate-workflows   Match workflow anchors and model filenames"
 	@echo "  make up            Start ComfyUI and API in the foreground"
 	@echo "  make down          Stop the exact service supervisor from its PID file"
 	@echo "  make restart       Stop, then start ComfyUI and API"
@@ -108,6 +110,12 @@ models-custom:
 doctor:
 	MODEL_PROFILE="$(MODEL_PROFILE)" COMFY_PROFILE="$(COMFY_PROFILE)" MODEL_FILE="$(MODEL_FILE)" MODEL_DIR="$(MODEL_DIR)" bash scripts/doctor.sh
 
+doctor-image:
+	COMFY_PROFILE=image MODEL_PROFILE=image bash scripts/doctor.sh
+
+validate-workflows:
+	bash scripts/venv_exec.sh python scripts/validate_workflows.py
+
 up:
 	bash scripts/start_services.sh
 
@@ -136,6 +144,7 @@ test:
 	bash tests/test_pip_mirror.sh
 	bash tests/test_comfy_deps.sh
 	bash tests/test_comfy_profile.sh
+	bash scripts/venv_exec.sh python scripts/validate_workflows.py
 
 test-tools:
 	bash tests/test_tools.sh
