@@ -4,6 +4,7 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/runtime_env.sh"
 source "${SCRIPT_DIR}/pip_mirror.sh"
+source "${SCRIPT_DIR}/lib/download.sh"
 
 ACTION="${1:-enter}"
 SHELL_KIND="${SHELL_KIND:-zsh}"
@@ -18,6 +19,8 @@ SHELL_CONFIG_DIR="${SHELL_CONFIG_DIR:-${SHELL_HOME}/config}"
 PIP_CONFIG_FILE="${PIP_CONFIG_FILE:-${SHELL_CONFIG_DIR}/pip/pip.conf}"
 NPM_CONFIG_USERCONFIG="${NPM_CONFIG_USERCONFIG:-${SHELL_CONFIG_DIR}/npm/npmrc}"
 NPM_REGISTRY="${NPM_REGISTRY:-https://registry.npmjs.org/}"
+PERSISTENT_ZSH_ROOT="${PERSISTENT_ZSH_ROOT:-${TOOLS_HOME}/zsh}"
+PERSISTENT_ZSH_BIN="${PERSISTENT_ZSH_ROOT}/bin/zsh"
 
 ensure_directories() {
   if [ -f "${SHELL_HISTORY_DIR}" ]; then
@@ -136,7 +139,44 @@ shell_run_privileged() {
   fi
 }
 
+install_persistent_zsh() {
+  local kernel arch archive url relocate
+  kernel="$(uname -s | tr '[:upper:]' '[:lower:]')"
+  arch="$(uname -m)"
+  case "${kernel}:${arch}" in
+    linux:x86_64|linux:amd64) arch=x86_64 ;;
+    *) return 2 ;;
+  esac
+  archive="${CACHE_DIR}/tools/zsh-5.8-${kernel}-${arch}.tar.gz"
+  url="${PERSISTENT_ZSH_URL:-https://github.com/romkatv/zsh-bin/releases/download/v6.1.1/zsh-5.8-${kernel}-${arch}.tar.gz}"
+  if [ ! -x "${PERSISTENT_ZSH_BIN}" ]; then
+    echo "Installing persistent portable zsh: ${PERSISTENT_ZSH_ROOT}"
+    [ -f "${archive}" ] || download_atomic "${url}" "${archive}" 0644
+    rm -rf "${PERSISTENT_ZSH_ROOT}.extracting"
+    mkdir -p "${PERSISTENT_ZSH_ROOT}.extracting"
+    tar -xzf "${archive}" -C "${PERSISTENT_ZSH_ROOT}.extracting"
+    rm -rf "${PERSISTENT_ZSH_ROOT}"
+    mv "${PERSISTENT_ZSH_ROOT}.extracting" "${PERSISTENT_ZSH_ROOT}"
+    relocate="${PERSISTENT_ZSH_ROOT}/share/zsh/5.8/scripts/relocate"
+    [ ! -x "${relocate}" ] || "${relocate}"
+  fi
+  [ -x "${PERSISTENT_ZSH_BIN}" ] || return 1
+  ln -sfn "${PERSISTENT_ZSH_BIN}" "${TOOLS_BIN_DIR}/zsh"
+  hash -r
+}
+
 ensure_zsh() {
+  if [ -x "${PERSISTENT_ZSH_BIN}" ]; then
+    ln -sfn "${PERSISTENT_ZSH_BIN}" "${TOOLS_BIN_DIR}/zsh"
+    hash -r
+    return 0
+  fi
+  local mode="${ZSH_INSTALL_MODE:-auto}"
+  if [ "${mode}" = portable ] ||
+     { [ "${mode}" = auto ] && { [ "${SOUP_ENV_MODE}" = modelscope ] || [ "${SOUP_ENV_MODE}" = docker ]; }; }; then
+    if install_persistent_zsh; then return 0; fi
+    echo "WARN portable zsh installation failed; trying the system package manager." >&2
+  fi
   command -v zsh >/dev/null 2>&1 && return 0
   [ "${INSTALL_ZSH:-auto}" != 0 ] || {
     echo "INFO zsh installation disabled; Bash mode remains available."
