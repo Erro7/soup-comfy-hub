@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
-.PHONY: help init init-core init-image init-video init-all comfy-profile-status venv-init venv-status venv-doctor comfy-deps comfy-deps-status models models-image models-video models-custom doctor doctor-image validate-workflows up down restart status logs smoke test test-tools test-shell test-venv test-comfy-deps test-comfy-profile lint \
+.PHONY: help init init-core init-image init-video init-all comfy-profile-status venv-init venv-status venv-doctor comfy-deps comfy-deps-status models models-image models-video models-custom doctor doctor-image validate-workflows up down restart status logs smoke test test-tools test-shell test-venv test-comfy-deps test-comfy-profile test-download lint \
         shell shell-init shell-status shell-env shell-cache shell-cache-clean \
         shell-doctor shell-update shell-help tools-status cloudflared-install cloudflared-status tunnel tunnel-init tunnel-status tunnel-service-install tunnel-service-start tunnel-service-stop tunnel-service-restart tunnel-service-status tunnel-service-uninstall
 
@@ -145,6 +145,7 @@ test:
 	bash tests/test_comfy_deps.sh
 	bash tests/test_comfy_profile.sh
 	bash scripts/venv_exec.sh python scripts/validate_workflows.py
+	bash tests/test_download.sh
 
 test-tools:
 	bash tests/test_tools.sh
@@ -160,6 +161,9 @@ test-comfy-deps:
 
 test-comfy-profile:
 	bash tests/test_comfy_profile.sh
+
+test-download:
+	bash tests/test_download.sh
 
 lint:
 	bash scripts/venv_exec.sh python -m ruff check gateway studio_frontend tests
