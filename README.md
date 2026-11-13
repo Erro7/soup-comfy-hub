@@ -40,6 +40,8 @@ All commands resolve the same `DATA_DIR`, `VENV_DIR`, `COMFY_DIR`, cache, logs, 
 | `make comfy-deps-status` | Show the active Torch and optional workflow-template policy. |
 | `make models` | Download or resume model files; uses the existing venv or Notebook ModelScope client. |
 | `make doctor` | Validate the shared venv, API packages, nodes, models, and GPU. |
+| `make test-core-runtime` | Run the Step 5 live Gateway-to-ComfyUI acceptance. |
+| `make test-image-runtime IMAGE_FACE=... IMAGE_OUTFIT=... IMAGE_POSE=...` | Run one authenticated Step 6 image job and validate returned media. |
 | `make up` | Start services only; never installs packages. |
 | `make down` | Stop only the recorded supervisor PID; no broad `pkill`. |
 | `make restart/status/logs/smoke` | Operate and verify the same service instance and persistent paths. |
@@ -156,6 +158,20 @@ COMFY_PROFILE=video MODEL_PROFILE=video make doctor
 ```
 
 Profile installation never downloads model weights. Model downloads remain separate and resumable.
+
+After downloading the image profile, run the real image-chain acceptance with three local reference images:
+
+```bash
+make down
+make models-image
+make doctor-image
+make test-image-runtime \
+  IMAGE_FACE=/path/to/clear-face.png \
+  IMAGE_OUTFIT=/path/to/outfit-reference.png \
+  IMAGE_POSE=/path/to/pose-reference.png
+```
+
+The command starts temporary services only when needed, submits an authenticated `POST /v1/images/edits`, validates the returned image signature, and writes `step6-image-test.png` under the persistent task output directory. Set `IMAGE_OUTPUT=/path/result.png` or `IMAGE_PROMPT='...'` to override those defaults. If services were already running, they are reused and left running; restart them after `make init-image` so newly installed nodes are loaded.
 
 `make test-core-runtime` is the Step 5 acceptance test. It validates the core installation, starts ComfyUI and Gateway only when needed, checks local readiness plus required OpenAPI routes, and stops only services started by the test. Existing services are reused and left running.
 
