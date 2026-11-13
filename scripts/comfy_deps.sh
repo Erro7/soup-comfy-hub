@@ -128,6 +128,7 @@ install_vendor_packages() {
   while IFS= read -r index; do
     echo "Trying Comfy-published packages from: ${index}"
     if "${VENV_DIR}/bin/python" -m pip install --prefer-binary --no-deps \
+      --timeout "${COMFY_PACKAGE_TIMEOUT:-30}" --retries "${COMFY_PACKAGE_RETRIES:-1}" \
       --index-url "${index}" -r "${VENDOR_REQUIREMENTS}"; then
       echo "Installed Comfy-published packages from: ${index}"
       return 0
