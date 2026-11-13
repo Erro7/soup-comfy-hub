@@ -38,7 +38,7 @@ for line_number, raw in enumerate(manifest_path.read_text().splitlines(), 1):
         print(f"{manifest_path}:{line_number}: expected four fields", file=sys.stderr)
         continue
     kind, repository, source, target = parts
-    if kind not in {"file", "tree"} or not repository or not source or not target:
+    if kind not in {"file", "tree", "archive"} or not repository or not source or not target:
         failed = True
         print(f"{manifest_path}:{line_number}: invalid model entry", file=sys.stderr)
     target_path = Path(target)
