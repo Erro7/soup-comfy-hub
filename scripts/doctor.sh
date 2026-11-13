@@ -26,13 +26,35 @@ PY
     fail=1
   fi
 fi
+COMFY_PROFILE="${COMFY_PROFILE:-core}"
+case "${COMFY_PROFILE}" in core|image|video|all) ;; *)
+  echo "MISS invalid COMFY_PROFILE=${COMFY_PROFILE}"
+  fail=1
+  ;;
+esac
 check_file "${DATA_DIR}/.runtime-ready" "Runtime marker"
+check_file "${DATA_DIR}/state/comfy-profiles/core" "ComfyUI core profile marker"
 check_file "${COMFY_DIR}/main.py" "ComfyUI"
-check_dir "${COMFY_DIR}/custom_nodes/ComfyUI-VideoHelperSuite" "VideoHelperSuite"
-check_dir "${COMFY_DIR}/custom_nodes/ComfyUI_InstantID" "InstantID nodes"
-check_dir "${COMFY_DIR}/custom_nodes/ComfyUI_IPAdapter_plus" "IPAdapter nodes"
-if [ "${INSTALL_POSE_GALLERY:-0}" = "1" ]; then
-  check_dir "${COMFY_DIR}/custom_nodes/ai-pose-gallery-zh/comfyui_plugin" "AI pose gallery zh"
+if [ -x "${VENV_DIR}/bin/python" ]; then
+  if "${VENV_DIR}/bin/python" -m pip show comfyui-frontend-package comfyui-embedded-docs >/dev/null 2>&1; then
+    echo "OK   ComfyUI frontend and embedded docs"
+  else
+    echo "MISS ComfyUI core frontend packages"
+    fail=1
+  fi
+fi
+if [ "${COMFY_PROFILE}" = image ] || [ "${COMFY_PROFILE}" = all ]; then
+  check_file "${DATA_DIR}/state/comfy-profiles/image" "ComfyUI image profile marker"
+  check_dir "${COMFY_DIR}/custom_nodes/ComfyUI_InstantID" "InstantID nodes"
+  check_dir "${COMFY_DIR}/custom_nodes/ComfyUI_IPAdapter_plus" "IPAdapter nodes"
+  if [ "${INSTALL_POSE_GALLERY:-0}" = 1 ]; then
+    check_dir "${COMFY_DIR}/custom_nodes/ai-pose-gallery-zh/comfyui_plugin" "AI pose gallery zh"
+  fi
+fi
+if [ "${COMFY_PROFILE}" = video ] || [ "${COMFY_PROFILE}" = all ]; then
+  check_file "${DATA_DIR}/state/comfy-profiles/video" "ComfyUI video profile marker"
+  check_dir "${COMFY_DIR}/custom_nodes/ComfyUI-VideoHelperSuite" "VideoHelperSuite"
+  check_dir "${COMFY_DIR}/custom_nodes/ComfyUI-GGUF" "GGUF nodes"
 fi
 if [ "${ENABLE_SOUP:-0}" = "1" ]; then
   if "${VENV_DIR}/bin/python" -m pip show soup-cli >/dev/null 2>&1; then
