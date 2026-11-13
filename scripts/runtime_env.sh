@@ -4,6 +4,8 @@
 _SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib/paths.sh
 source "${_SCRIPT_DIR}/lib/paths.sh"
+# shellcheck source=lib/platform.sh
+source "${_SCRIPT_DIR}/lib/platform.sh"
 PROJECT_DIR="${PROJECT_DIR:-$(cd "${_SCRIPT_DIR}/.." && pwd)}"
 if [ -f "${PROJECT_DIR}/.env" ]; then
   # .env supplies defaults; explicit shell/container variables take precedence.
@@ -19,12 +21,25 @@ if [ -f "${PROJECT_DIR}/.env" ]; then
   done
   unset _runtime_env_before key value
 fi
+SOUP_ENV_MODE="$(platform_kind)"
+export SOUP_ENV_MODE
+if [ "${SOUP_ENV_MODE}" = build ]; then
+  _DEFAULT_CACHE_DIR="/var/cache/soup-comfy-hub"
+  _DEFAULT_SHELL_HOME="/opt/soup-env/shell"
+else
+  _DEFAULT_CACHE_DIR="${DATA_DIR:-}/cache"
+  _DEFAULT_SHELL_HOME="${DATA_DIR:-}/shell"
+fi
 paths_export_runtime
+[ "${SOUP_ENV_MODE}" != build ] || {
+  _DEFAULT_CACHE_DIR="/var/cache/soup-comfy-hub"
+  _DEFAULT_SHELL_HOME="/opt/soup-env/shell"
+}
 COMFY_DIR="${COMFY_DIR:-${DATA_DIR}/ComfyUI}"
 VENV_DIR="${VENV_DIR:-${DATA_DIR}/venv}"
 
 export PROJECT_DIR WORKSPACE DATA_DIR COMFY_DIR VENV_DIR TOOLS_HOME TOOLS_BIN_DIR
-export CACHE_DIR="${CACHE_DIR:-${DATA_DIR}/cache}"
+export CACHE_DIR="${CACHE_DIR:-${_DEFAULT_CACHE_DIR}}"
 export PIP_CACHE_DIR="${PIP_CACHE_DIR:-${CACHE_DIR}/pip}"
 export UV_CACHE_DIR="${UV_CACHE_DIR:-${CACHE_DIR}/uv}"
 export MODELSCOPE_CACHE="${MODELSCOPE_CACHE:-${CACHE_DIR}/modelscope}"
@@ -44,12 +59,13 @@ export TASK_DB_PATH="${TASK_DB_PATH:-${DATA_DIR}/outputs/tasks.sqlite3}"
 
 export LOG_DIR="${LOG_DIR:-${DATA_DIR}/logs}"
 export SERVICES_PID_FILE="${SERVICES_PID_FILE:-${LOG_DIR}/services.pid}"
-export SHELL_HOME="${SHELL_HOME:-${DATA_DIR}/shell}"
+export SHELL_HOME="${SHELL_HOME:-${_DEFAULT_SHELL_HOME}}"
 export SHELL_BIN_DIR="${SHELL_BIN_DIR:-${SHELL_HOME}/bin}"
 export SHELL_STATE_DIR="${SHELL_STATE_DIR:-${SHELL_HOME}/state}"
 export SHELL_HISTORY_DIR="${SHELL_HISTORY_DIR:-${SHELL_HOME}/history}"
 paths_prepend "${TOOLS_BIN_DIR}"
 paths_prepend "${SHELL_BIN_DIR}"
+unset _DEFAULT_CACHE_DIR _DEFAULT_SHELL_HOME
 
 runtime_require_venv() {
   if [ ! -x "${VENV_DIR}/bin/python" ]; then
