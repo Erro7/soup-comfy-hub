@@ -31,6 +31,7 @@ This file is the source of truth for staged delivery. A phase is marked complete
 
 ## Delivery log
 
+| 2026-11-12 | Training | Added independent SDXL LoRA fast path and optional ModelScope Mode-A persistent user environment; neither requires the image inference profile |
 | 2026-11-12 | 6 | Fixed: antelopev2 now uses the official checksummed archive with cached, safe, idempotent extraction instead of an incomplete ModelScope mirror |
 | 2026-11-12 | 2 | Fixed: ModelScope/plain-container zsh is now a persistent relocatable tool, so container restart does not trigger apt reinstallation |
 
