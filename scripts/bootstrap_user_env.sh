@@ -12,6 +12,7 @@ DEFAULT_USER="${MODE_A_DEFAULT_USER:-dev}"
 REQUESTED_UID="${MODE_A_UID:-10001}"
 MODE_A_AUTO_ENTER="${MODE_A_AUTO_ENTER:-1}"
 MODE_A_PASSWORDLESS_SUDO="${MODE_A_PASSWORDLESS_SUDO:-1}"
+TRAIN_ROOT="${TRAIN_ROOT:-${DATA_DIR}/training}"
 
 [ "$(id -u)" -eq 0 ] || {
   echo "Mode-A user initialization requires root inside the container." >&2
@@ -56,7 +57,7 @@ fi
 echo ">>> [2/7] Creating persistent user directories"
 mkdir -p "${USER_HOME}"/{.cache,.local/bin,.npm-global,.ssh,.cc-switch,projects,models,datasets,outputs,logs}
 mkdir -p "${PIP_CACHE_DIR}" "${MODELSCOPE_CACHE}" "${HF_HOME}" "${TORCH_HOME}" \
-  "${NPM_CONFIG_CACHE}" "${TASK_OUTPUT_DIR}" "${COMFY_DIR}/models/loras"
+  "${NPM_CONFIG_CACHE}" "${TASK_OUTPUT_DIR}" "${COMFY_DIR}/models/loras" "${TRAIN_ROOT}"
 
 echo ">>> [3/7] Restoring the container user and login shell"
 if id -u "${USERNAME}" >/dev/null 2>&1; then
@@ -160,7 +161,7 @@ fi
 echo ">>> [7/7] Calibrating permissions and installing the Terminal recovery hook"
 chown -R "${USERNAME}:${USERNAME}" "${USER_HOME}"
 for writable in "${PIP_CACHE_DIR}" "${MODELSCOPE_CACHE}" "${HF_HOME}" "${TORCH_HOME}" \
-  "${NPM_CONFIG_CACHE}" "${TASK_OUTPUT_DIR}" "${COMFY_DIR}/models/loras" "${VENV_DIR}"; do
+  "${NPM_CONFIG_CACHE}" "${TASK_OUTPUT_DIR}" "${COMFY_DIR}/models/loras" "${TRAIN_ROOT}" "${VENV_DIR}"; do
   [ ! -e "${writable}" ] || chown -R "${USERNAME}:${USERNAME}" "${writable}"
 done
 chmod 700 "${USER_HOME}/.ssh" "${USER_HOME}/.cc-switch"
