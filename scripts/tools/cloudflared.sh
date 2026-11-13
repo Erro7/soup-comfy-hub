@@ -83,6 +83,7 @@ show_status() {
   printf '%-22s %s\n' "tools home" "${TOOLS_HOME}"
   printf '%-22s %s\n' "managed binary" "${MANAGED_BINARY}"
   printf '%-22s %s\n' "runtime enabled" "${ENABLE_CLOUDFLARED:-0}"
+  printf '%-22s %s\n' "file mirror" "${GITHUB_FILE_MIRROR_PREFIX:-auto}"
   printf '%-22s %s\n' "public URL" "${CLOUDFLARE_PUBLIC_URL:-not configured}"
   if binary="$(resolve_binary 2>/dev/null)"; then
     echo "OK   cloudflared: ${binary}"
