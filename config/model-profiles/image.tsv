@@ -1,0 +1,7 @@
+# kind|repository|source pattern|ComfyUI target
+file|AI-ModelScope/stable-diffusion-xl-base-1.0|sd_xl_base_1.0.safetensors|checkpoints/sd_xl_base_1.0.safetensors
+file|InstantX/InstantID|ip-adapter.bin|instantid/ip-adapter.bin
+file|InstantX/InstantID|ControlNetModel/diffusion_pytorch_model.safetensors|controlnet/instantid/diffusion_pytorch_model.safetensors
+file|AI-ModelScope/IP-Adapter|sdxl_models/ip-adapter-plus_sdxl_vit-h.safetensors|ipadapter/ip-adapter-plus_sdxl_vit-h.safetensors
+file|AI-ModelScope/IP-Adapter|models/image_encoder/model.safetensors|clip_vision/CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors
+tree|deepghs/insightface|**/antelopev2/**|insightface/models/antelopev2
