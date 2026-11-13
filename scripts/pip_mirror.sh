@@ -17,18 +17,23 @@ configure_pip_mirror() {
   fi
 
   if [[ "${mirror}" == "auto" ]]; then
-    case "${timezone}" in
-      Asia/Shanghai|Asia/Chongqing|Asia/Harbin|Asia/Urumqi) mirror="tsinghua" ;;
-      *) mirror="pypi" ;;
-    esac
+    if [[ -n "${MODELSCOPE_ENVIRONMENT:-}" || -n "${MODELSCOPE_NOTEBOOK:-}" || -d /mnt/workspace ]]; then
+      mirror="modelscope"
+    else
+      case "${timezone}" in
+        Asia/Shanghai|Asia/Chongqing|Asia/Harbin|Asia/Urumqi) mirror="tsinghua" ;;
+        *) mirror="pypi" ;;
+      esac
+    fi
   fi
 
   case "${mirror}" in
+    modelscope|aliyun-internal|alicloud) export PIP_INDEX_URL="https://mirrors.cloud.aliyuncs.com/pypi/simple" ;;
     tsinghua|tuna) export PIP_INDEX_URL="https://pypi.tuna.tsinghua.edu.cn/simple" ;;
     aliyun|alibaba) export PIP_INDEX_URL="https://mirrors.aliyun.com/pypi/simple/" ;;
     pypi|official|off) export PIP_INDEX_URL="https://pypi.org/simple" ;;
     *)
-      echo "Unsupported PIP_MIRROR=${mirror}; use auto, tsinghua, aliyun, or pypi" >&2
+      echo "Unsupported PIP_MIRROR=${mirror}; use auto, modelscope, tsinghua, aliyun, or pypi" >&2
       return 2
       ;;
   esac
