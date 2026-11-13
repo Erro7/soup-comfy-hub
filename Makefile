@@ -1,12 +1,13 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
-.PHONY: help init venv-init venv-status venv-doctor comfy-deps comfy-deps-status models models-image models-video models-custom doctor up down restart status logs smoke test test-tools test-shell test-venv test-comfy-deps lint \
+.PHONY: help init init-core init-image init-video init-all comfy-profile-status venv-init venv-status venv-doctor comfy-deps comfy-deps-status models models-image models-video models-custom doctor up down restart status logs smoke test test-tools test-shell test-venv test-comfy-deps test-comfy-profile lint \
         shell shell-init shell-status shell-env shell-cache shell-cache-clean \
         shell-doctor shell-update shell-help tools-status cloudflared-install cloudflared-status tunnel tunnel-init tunnel-status tunnel-service-install tunnel-service-start tunnel-service-stop tunnel-service-restart tunnel-service-status tunnel-service-uninstall
 
 CMD ?= enter
-MODEL_PROFILE ?= all
+COMFY_PROFILE ?= core
+MODEL_PROFILE ?= none
 SHELL_KIND ?= zsh
 CACHE_KIND ?=
 SHELL_COMMAND ?=
@@ -14,7 +15,12 @@ SHELL_COMMAND ?=
 help:
 	@echo "Soup-Comfy-Hub commands"
 	@echo
-	@echo "  make init          Resumable project setup; reuses a compatible persistent venv"
+	@echo "  make init          Install the minimal core profile (same as init-core)"
+	@echo "  make init-core     ComfyUI + API only; no image/video custom nodes"
+	@echo "  make init-image    Add the image/InstantID/IPAdapter profile"
+	@echo "  make init-video    Add the video/VideoHelper/GGUF profile"
+	@echo "  make init-all      Install image and video profiles"
+	@echo "  make comfy-profile-status   Show requested/installed profiles"
 	@echo "  make venv-init     Create/reuse only the persistent Python environment"
 	@echo "  make venv-status   Show base Python and venv compatibility state"
 	@echo "  make venv-doctor   Validate the persistent Python environment"
@@ -55,8 +61,22 @@ help:
 	@echo "  make test          Run tests in the project venv"
 	@echo "  make lint          Run Ruff in the project venv"
 
-init:
-	bash scripts/bootstrap.sh
+init: init-core
+
+init-core:
+	COMFY_PROFILE=core bash scripts/bootstrap.sh
+
+init-image:
+	COMFY_PROFILE=image bash scripts/bootstrap.sh
+
+init-video:
+	COMFY_PROFILE=video bash scripts/bootstrap.sh
+
+init-all:
+	COMFY_PROFILE=all bash scripts/bootstrap.sh
+
+comfy-profile-status:
+	@COMFY_PROFILE="$(COMFY_PROFILE)" bash scripts/comfy_profile.sh status
 
 venv-init:
 	bash scripts/venv.sh init
@@ -74,7 +94,7 @@ comfy-deps-status:
 	@bash scripts/comfy_deps.sh status
 
 models:
-	MODEL_PROFILE="$(MODEL_PROFILE)" bash scripts/download_models.sh
+	MODEL_PROFILE="$(if $(filter none,$(MODEL_PROFILE)),all,$(MODEL_PROFILE))" bash scripts/download_models.sh
 
 models-image:
 	MODEL_PROFILE=image bash scripts/download_models.sh
@@ -86,7 +106,7 @@ models-custom:
 	MODEL_PROFILE=custom MODEL_ID="$(MODEL_ID)" MODEL_FILE="$(MODEL_FILE)" MODEL_DIR="$(MODEL_DIR)" MODEL_REVISION="$(MODEL_REVISION)" bash scripts/download_models.sh
 
 doctor:
-	MODEL_PROFILE="$(MODEL_PROFILE)" MODEL_FILE="$(MODEL_FILE)" MODEL_DIR="$(MODEL_DIR)" bash scripts/doctor.sh
+	MODEL_PROFILE="$(MODEL_PROFILE)" COMFY_PROFILE="$(COMFY_PROFILE)" MODEL_FILE="$(MODEL_FILE)" MODEL_DIR="$(MODEL_DIR)" bash scripts/doctor.sh
 
 up:
 	bash scripts/start_services.sh
@@ -115,6 +135,7 @@ test:
 	bash tests/test_venv.sh
 	bash tests/test_pip_mirror.sh
 	bash tests/test_comfy_deps.sh
+	bash tests/test_comfy_profile.sh
 
 test-tools:
 	bash tests/test_tools.sh
@@ -127,6 +148,9 @@ test-venv:
 
 test-comfy-deps:
 	bash tests/test_comfy_deps.sh
+
+test-comfy-profile:
+	bash tests/test_comfy_profile.sh
 
 lint:
 	bash scripts/venv_exec.sh python -m ruff check gateway studio_frontend tests
