@@ -5,13 +5,14 @@ ARG INSTALL_POSE_GALLERY=0
 ARG INSTALL_SOUP=0
 ARG INSTALL_GRADIO_UI=0
 ARG GITHUB_MIRROR_PREFIX=auto
-ARG INITIALIZE_SHELL=0
+ARG INITIALIZE_SHELL=1
 ARG COMFY_TORCH_MODE=install
 ARG TORCH_INDEX_URL=https://download.pytorch.org/whl/cu124
 ARG TZ=Etc/UTC
 
 ENV DEBIAN_FRONTEND=noninteractive PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
-    PROJECT_DIR=/app DATA_DIR=/data COMFY_DIR=/opt/ComfyUI VENV_DIR=/opt/venv \
+    SOUP_ENV_MODE=build PROJECT_DIR=/app DATA_DIR=/data COMFY_DIR=/opt/ComfyUI VENV_DIR=/opt/venv \
+    SHELL_HOME=/opt/soup-env/shell TOOLS_HOME=/opt/soup-env/tools CACHE_DIR=/var/cache/soup-comfy-hub \
     COMFY_INPUT_DIR=/data/input COMFY_OUTPUT_DIR=/data/comfy-output \
     TASK_OUTPUT_DIR=/data/outputs TASK_DB_PATH=/data/outputs/tasks.sqlite3 \
     GATEWAY_HOST=0.0.0.0 GATEWAY_PORT=8000 \
@@ -26,7 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 COPY . .
 RUN bash scripts/bootstrap.sh \
-    && rm -rf /opt/ComfyUI/models/* /root/.cache/pip /data/* \
+    && rm -rf /opt/ComfyUI/models/* /root/.cache/pip /var/cache/soup-comfy-hub/* /data/* \
     && rm -f /app/.env \
     && mkdir -p /opt/ComfyUI/models /data/input /data/comfy-output /data/outputs
 
