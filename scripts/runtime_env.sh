@@ -23,18 +23,14 @@ if [ -f "${PROJECT_DIR}/.env" ]; then
 fi
 SOUP_ENV_MODE="$(platform_kind)"
 export SOUP_ENV_MODE
+paths_export_runtime
 if [ "${SOUP_ENV_MODE}" = build ]; then
   _DEFAULT_CACHE_DIR="/var/cache/soup-comfy-hub"
   _DEFAULT_SHELL_HOME="/opt/soup-env/shell"
 else
-  _DEFAULT_CACHE_DIR="${DATA_DIR:-}/cache"
-  _DEFAULT_SHELL_HOME="${DATA_DIR:-}/shell"
+  _DEFAULT_CACHE_DIR="${DATA_DIR}/cache"
+  _DEFAULT_SHELL_HOME="${DATA_DIR}/shell"
 fi
-paths_export_runtime
-[ "${SOUP_ENV_MODE}" != build ] || {
-  _DEFAULT_CACHE_DIR="/var/cache/soup-comfy-hub"
-  _DEFAULT_SHELL_HOME="/opt/soup-env/shell"
-}
 COMFY_DIR="${COMFY_DIR:-${DATA_DIR}/ComfyUI}"
 VENV_DIR="${VENV_DIR:-${DATA_DIR}/venv}"
 
