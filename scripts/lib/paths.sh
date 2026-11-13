@@ -57,6 +57,10 @@ paths_resolve_tools_home() {
     printf '%s\n' "${TOOLS_HOME}"
     return
   fi
+  if [ "${SOUP_ENV_MODE:-}" = build ] && paths_can_use /opt/soup-env/tools; then
+    printf '/opt/soup-env/tools\n'
+    return
+  fi
   data="${DATA_DIR:-$(paths_resolve_data_dir)}"
   candidate="${data}/tools"
   if paths_can_use "${candidate}"; then
