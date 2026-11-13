@@ -9,7 +9,7 @@ This file is the source of truth for staged delivery. A phase is marked complete
 | 3 | Persistent Python/venv lifecycle | Complete | Container restart reuses the same environment without reinstalling |
 | 4 | Fast, resilient package and Git source selection | Complete | Mirror changes are explicit, recoverable, and do not corrupt caches |
 | 5 | ComfyUI core installation profiles | In progress | Minimal API profile starts without optional template/media packages |
-| 6 | ComfyUI image model and custom-node profile | Pending | Image workflow passes an end-to-end smoke test |
+| 6 | ComfyUI image model and custom-node profile | In progress | Image workflow passes an end-to-end smoke test |
 | 7 | ComfyUI video model and custom-node profile | Pending | Video workflow passes an end-to-end smoke test |
 | 8 | API gateway core | Pending | Authenticated API can submit, poll, and retrieve ComfyUI jobs |
 | 9 | Service supervision and observability | Pending | Start, stop, status, logs, readiness and URLs are deterministic |
@@ -33,7 +33,7 @@ This file is the source of truth for staged delivery. A phase is marked complete
 
 | Date | Phase | Result |
 |---|---:|---|
-| 2026-11-12 | 5 | In progress: core/image/video/all installers, cumulative profile state, profile-aware doctor and startup preflight implemented; real ComfyUI readiness remains to be accepted on the GPU platform |\n| 2026-11-12 | 4 | Complete: cache-preserving mirror changes, direct Git fallback, explicit PyTorch source, official optional-package fallback, and minimal dependency renderer; Phase 5 core profile started |\n| 2026-11-12 | 3 | Complete: standalone venv lifecycle, base-Python compatibility state, restart reuse, explicit rebuild control, and pip-index/cache separation |\n| 2026-11-12 | 2 | Complete: venv-independent Bash/zsh initialization, project-scoped pip/npm configs, persistent package/model caches, optional OMZ, managed command execution and offline regression |\n| 2026-11-12 | 1 | Complete: path/platform/download libraries, standalone token-based cloudflared CLI, Make compatibility aliases, shared-shell PATH integration, and offline regression added |
+| 2026-11-12 | 6 | In progress: image model manifest, preinstalled ModelScope selection, manifest-driven download/Doctor checks and workflow filename validation implemented; GPU image generation remains to be accepted |\n| 2026-11-12 | 5 | In progress: core/image/video/all installers, cumulative profile state, profile-aware doctor and startup preflight implemented; real ComfyUI readiness remains to be accepted on the GPU platform |\n| 2026-11-12 | 4 | Complete: cache-preserving mirror changes, direct Git fallback, explicit PyTorch source, official optional-package fallback, and minimal dependency renderer; Phase 5 core profile started |\n| 2026-11-12 | 3 | Complete: standalone venv lifecycle, base-Python compatibility state, restart reuse, explicit rebuild control, and pip-index/cache separation |\n| 2026-11-12 | 2 | Complete: venv-independent Bash/zsh initialization, project-scoped pip/npm configs, persistent package/model caches, optional OMZ, managed command execution and offline regression |\n| 2026-11-12 | 1 | Complete: path/platform/download libraries, standalone token-based cloudflared CLI, Make compatibility aliases, shared-shell PATH integration, and offline regression added |
 
 ## Phase 1 verification
 
@@ -72,6 +72,15 @@ This file is the source of truth for staged delivery. A phase is marked complete
 - Doctor defaults to the core profile and no model-weight checks.
 - Startup now refuses an uninitialized runtime with an actionable `make init-core` message.
 - Final phase acceptance still requires `make up && make smoke` on the target GPU platform.
+
+## Phase 6 implementation verification
+
+- The image manifest provides every model filename referenced by the portrait workflow.
+- Manifest paths were checked for traversal, duplicate targets and invalid entries.
+- Download and Doctor use the same manifest instead of duplicate hard-coded paths.
+- The downloader defaults to the ModelScope client preinstalled by the platform.
+- Workflow anchors and the image model contract passed offline validation.
+- Final phase acceptance requires one successful authenticated image API job on the GPU platform.
 
 ## Git policy
 
