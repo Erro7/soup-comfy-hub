@@ -8,9 +8,11 @@ source "${SCRIPT_DIR}/pip_mirror.sh"
 ACTION="${1:-install}"
 SOURCE_REQUIREMENTS="${COMFY_REQUIREMENTS_FILE:-${COMFY_DIR}/requirements.txt}"
 OUTPUT_REQUIREMENTS="${COMFY_CORE_REQUIREMENTS:-${DATA_DIR}/state/comfy-core-requirements.txt}"
+VENDOR_REQUIREMENTS="${COMFY_VENDOR_REQUIREMENTS:-${DATA_DIR}/state/comfy-vendor-requirements.txt}"
 TORCH_MODE="${COMFY_TORCH_MODE:-auto}"
 TORCH_INDEX_URL="${TORCH_INDEX_URL:-}"
-OPTIONAL_INDEX_URL="${COMFY_OPTIONAL_INDEX_URL:-https://pypi.org/simple}"
+PACKAGE_INDEX_URL="${COMFY_PACKAGE_INDEX_URL:-https://pypi.org/simple}"
+OPTIONAL_INDEX_URL="${COMFY_OPTIONAL_INDEX_URL:-${PACKAGE_INDEX_URL}}"
 
 require_source() {
   [ -f "${SOURCE_REQUIREMENTS}" ] || {
@@ -21,15 +23,30 @@ require_source() {
 
 render_core() {
   require_source
-  mkdir -p "$(dirname "${OUTPUT_REQUIREMENTS}")"
+  mkdir -p "$(dirname "${OUTPUT_REQUIREMENTS}")" "$(dirname "${VENDOR_REQUIREMENTS}")"
+
   awk '
-    BEGIN { IGNORECASE=1 }
-    /^[[:space:]]*(torch|torchvision|torchaudio)([<>=!~[:space:]].*)?$/ { next }
-    /^[[:space:]]*comfyui-workflow-templates([<>=!~[:space:]].*)?$/ { next }
-    /^[[:space:]]*comfyui-workflow-templates-media-assets-/ { next }
-    { print }
+    {
+      line = tolower($0)
+      if (line ~ /^[[:space:]]*(comfyui-frontend-package|comfyui-embedded-docs|comfy-aimdo|comfy-kitchen)([<>=!~[:space:]].*)?$/) {
+        print
+      }
+    }
+  ' "${SOURCE_REQUIREMENTS}" > "${VENDOR_REQUIREMENTS}"
+
+  awk '
+    {
+      line = tolower($0)
+      if (line ~ /^[[:space:]]*(torch|torchvision|torchaudio)([<>=!~[:space:]].*)?$/) next
+      if (line ~ /^[[:space:]]*comfyui-workflow-templates([<>=!~[:space:]].*)?$/) next
+      if (line ~ /^[[:space:]]*comfyui-workflow-templates-media-assets-/) next
+      if (line ~ /^[[:space:]]*(comfyui-frontend-package|comfyui-embedded-docs|comfy-aimdo|comfy-kitchen)([<>=!~[:space:]].*)?$/) next
+      print
+    }
   ' "${SOURCE_REQUIREMENTS}" > "${OUTPUT_REQUIREMENTS}"
-  echo "Rendered minimal ComfyUI requirements: ${OUTPUT_REQUIREMENTS}"
+
+  echo "Rendered mirror requirements: ${OUTPUT_REQUIREMENTS}"
+  echo "Rendered official Comfy packages: ${VENDOR_REQUIREMENTS}"
 }
 
 torch_available() {
@@ -94,14 +111,21 @@ install_core() {
   configure_pip_mirror
   render_core
   ensure_torch
-  echo "Installing minimal ComfyUI runtime dependencies."
+  if [ -s "${VENDOR_REQUIREMENTS}" ]; then
+    echo "Installing Comfy-published packages from official index: ${PACKAGE_INDEX_URL}"
+    "${VENV_DIR}/bin/python" -m pip install --prefer-binary --no-deps \
+      --index-url "${PACKAGE_INDEX_URL}" -r "${VENDOR_REQUIREMENTS}"
+  fi
+  echo "Installing remaining ComfyUI dependencies from mirror: ${PIP_INDEX_URL}"
   "${VENV_DIR}/bin/python" -m pip install --prefer-binary -r "${OUTPUT_REQUIREMENTS}"
   install_optional_templates
 }
 
 show_status() {
   printf '%-28s %s\n' "requirements source" "${SOURCE_REQUIREMENTS}"
-  printf '%-28s %s\n' "minimal requirements" "${OUTPUT_REQUIREMENTS}"
+  printf '%-28s %s\n' "mirror requirements" "${OUTPUT_REQUIREMENTS}"
+  printf '%-28s %s\n' "official requirements" "${VENDOR_REQUIREMENTS}"
+  printf '%-28s %s\n' "Comfy package index" "${PACKAGE_INDEX_URL}"
   printf '%-28s %s\n' "torch mode" "${TORCH_MODE}"
   printf '%-28s %s\n' "workflow templates" "${INSTALL_COMFY_WORKFLOW_TEMPLATES:-0}"
   if [ -x "${VENV_DIR}/bin/python" ] && torch_available; then
