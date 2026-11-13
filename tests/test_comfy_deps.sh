@@ -43,6 +43,9 @@ cat > "${TEMP_ROOT}/venv/bin/python" <<'FAKE'
 #!/usr/bin/env bash
 if [ "${1:-}" = "-m" ] && [ "${2:-}" = pip ]; then
   printf '%s|%s\n' "${PIP_INDEX_URL:-}" "$*" >> "${COMFY_DEPS_TEST_LOG}"
+  case "$*" in
+    *"--index-url https://pypi.tuna.tsinghua.edu.cn/simple "*) exit 1 ;;
+  esac
 fi
 exit 0
 FAKE
@@ -50,10 +53,12 @@ chmod +x "${TEMP_ROOT}/venv/bin/python"
 export VENV_DIR="${TEMP_ROOT}/venv"
 export PIP_MIRROR=tsinghua
 export COMFY_TORCH_MODE=preinstalled
-export COMFY_PACKAGE_INDEX_URL=https://pypi.org/simple
+export COMFY_PACKAGE_INDEX_URL=auto
+export TZ=Asia/Shanghai
 
 bash "${PROJECT_DIR}/scripts/comfy_deps.sh" install
-grep -q -- '--no-deps --index-url https://pypi.org/simple -r .*vendor.txt' "${COMFY_DEPS_TEST_LOG}"
+grep -q -- '--no-deps .*--index-url https://pypi.tuna.tsinghua.edu.cn/simple -r .*vendor.txt' "${COMFY_DEPS_TEST_LOG}"
+grep -q -- '--no-deps .*--index-url https://mirrors.cloud.tencent.com/pypi/simple/ -r .*vendor.txt' "${COMFY_DEPS_TEST_LOG}"
 grep -q 'https://pypi.tuna.tsinghua.edu.cn/simple|.*-r .*core.txt' "${COMFY_DEPS_TEST_LOG}"
 
 echo "minimal ComfyUI dependency regression: PASS"
