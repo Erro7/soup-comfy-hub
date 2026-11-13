@@ -96,7 +96,8 @@ ensure_torch() {
 package_indexes() {
   local configured="${PACKAGE_INDEX_URL}" candidates=() seen=" " index
   if [ "${configured}" = auto ]; then
-    if download_is_cn_timezone; then
+    if download_is_cn_timezone || [ -n "${MODELSCOPE_ENVIRONMENT:-}" ] || \
+      [ -n "${MODELSCOPE_NOTEBOOK:-}" ] || [ -d /mnt/workspace ]; then
       candidates=(
         "${PIP_INDEX_URL}"
         "https://mirrors.cloud.tencent.com/pypi/simple/"
@@ -165,6 +166,7 @@ install_core() {
 }
 
 show_status() {
+  configure_pip_mirror
   printf '%-28s %s\n' "requirements source" "${SOURCE_REQUIREMENTS}"
   printf '%-28s %s\n' "mirror requirements" "${OUTPUT_REQUIREMENTS}"
   printf '%-28s %s\n' "official requirements" "${VENDOR_REQUIREMENTS}"
