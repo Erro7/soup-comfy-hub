@@ -98,13 +98,13 @@ record_pip_environment "${PIP_STATE_FILE}"
 if [ "${UPGRADE_PIP_TOOLCHAIN:-0}" = "1" ]; then
   python -m pip install --upgrade pip
 fi
-python -m pip install -r "${PROJECT_DIR}/requirements.txt"
+pip_install_with_fallback -r "${PROJECT_DIR}/requirements.txt"
 
 if [ "${INSTALL_GRADIO_UI:-0}" = "1" ]; then
-  python -m pip install -r "${PROJECT_DIR}/requirements-ui.txt"
+  pip_install_with_fallback -r "${PROJECT_DIR}/requirements-ui.txt"
 fi
 if [ "${INSTALL_SOUP:-0}" = "1" ]; then
-  python -m pip install 'soup-cli[train]'
+  pip_install_with_fallback 'soup-cli[train]'
 fi
 if [ "${INSTALL_CLOUDFLARED:-1}" = "1" ]; then
   bash "${PROJECT_DIR}/scripts/tools/cloudflared.sh" install
@@ -118,7 +118,7 @@ install_node() {
   local repo="$1" name="$2"
   sync_repository "${repo}" "${COMFY_DIR}/custom_nodes/${name}"
   if [ -f "${COMFY_DIR}/custom_nodes/${name}/requirements.txt" ]; then
-    python -m pip install -r "${COMFY_DIR}/custom_nodes/${name}/requirements.txt"
+    pip_install_with_fallback -r "${COMFY_DIR}/custom_nodes/${name}/requirements.txt"
   fi
 }
 
