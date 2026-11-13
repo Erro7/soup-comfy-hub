@@ -6,6 +6,10 @@ source "${SCRIPT_DIR}/runtime_env.sh"
 
 runtime_activate_venv
 runtime_require_comfy
+if [ ! -f "${DATA_DIR}/state/comfy-profiles/core" ]; then
+  echo "ComfyUI core profile is not initialized; run 'make init-core' first." >&2
+  exit 1
+fi
 cd "${PROJECT_DIR}"
 mkdir -p "${LOG_DIR}" "${COMFY_INPUT_DIR}" "${COMFY_OUTPUT_DIR}" "${TASK_OUTPUT_DIR}"
 
@@ -84,6 +88,7 @@ fi
 
 echo
 echo "Soup-Comfy-Hub is ready"
+echo "  Comfy profile:  ${COMFY_PROFILE:-core}"
 echo "  ComfyUI local:  ${COMFY_URL:-http://127.0.0.1:8188}"
 if [ -n "${COMFY_PUBLIC_URL:-}" ]; then
   echo "  ComfyUI remote: ${COMFY_PUBLIC_URL%/}"
