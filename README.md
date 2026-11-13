@@ -179,7 +179,7 @@ The command starts temporary services only when needed, submits an authenticated
 
 Model downloads are resumable and prefer the ModelScope library preinstalled by supported Notebook images. The downloader does not install ModelScope into the project venv unless `INSTALL_MODELSCOPE_CLIENT=1` is explicitly set.
 
-The image profile is declared in `config/model-profiles/image.tsv`. That manifest is shared by the downloader, Doctor, and workflow validator, so model filenames and ComfyUI paths cannot silently drift.
+The image profile is declared in `config/model-profiles/image.tsv`. That manifest is shared by the downloader, Doctor, and workflow validator, so model filenames and ComfyUI paths cannot silently drift. Directory-based assets such as InsightFace `antelopev2` use a resumable repository snapshot because ModelScope glob behavior differs across client versions; Doctor verifies that the linked directory contains ONNX files.
 
 ```bash
 make init-image
