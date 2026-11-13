@@ -165,10 +165,8 @@ for writable in "${PIP_CACHE_DIR}" "${MODELSCOPE_CACHE}" "${HF_HOME}" "${TORCH_H
 done
 chmod 700 "${USER_HOME}/.ssh" "${USER_HOME}/.cc-switch"
 
-cat > "${BOOTSTRAP_LINK}" <<EOF
-#!/usr/bin/env bash
-exec bash "${PROJECT_DIR}/scripts/bootstrap_user_env.sh" "\\$@"
-EOF
+printf '#!/usr/bin/env bash\nexec bash %q "$@"\n' \
+  "${PROJECT_DIR}/scripts/bootstrap_user_env.sh" > "${BOOTSTRAP_LINK}"
 chmod 0755 "${BOOTSTRAP_LINK}"
 sed -i '/# === SOUP_MODE_A_START ===/,/# === SOUP_MODE_A_END ===/d' /root/.bashrc 2>/dev/null || true
 if [ "${MODE_A_AUTO_ENTER}" = 1 ]; then
