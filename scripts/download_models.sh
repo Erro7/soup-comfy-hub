@@ -13,25 +13,39 @@ runtime_require_venv
 runtime_require_comfy
 mkdir -p "${MODEL_CACHE_ROOT}"
 
-MS_PYTHON=""
-for candidate in python python3 /opt/conda/bin/python; do
-  resolved="$(command -v "${candidate}" 2>/dev/null || true)"
-  [ -n "${resolved}" ] || continue
-  if "${resolved}" -c 'import modelscope' >/dev/null 2>&1; then
-    MS_PYTHON="${resolved}"
-    echo "Using ModelScope preinstalled by the Notebook image: ${MS_PYTHON}"
-    break
-  fi
-done
+MS_PYTHON="${MODELSCOPE_PYTHON:-}"
+if [ -n "${MS_PYTHON}" ]; then
+  [ -x "${MS_PYTHON}" ] || { echo "MODELSCOPE_PYTHON is not executable: ${MS_PYTHON}" >&2; exit 1; }
+  "${MS_PYTHON}" -c 'import modelscope' >/dev/null 2>&1 || {
+    echo "MODELSCOPE_PYTHON cannot import modelscope: ${MS_PYTHON}" >&2
+    exit 1
+  }
+fi
 
 if [ -z "${MS_PYTHON}" ]; then
+  for candidate in /opt/conda/bin/python /usr/local/bin/python python3 python; do
+    resolved="$(command -v "${candidate}" 2>/dev/null || true)"
+    [ -n "${resolved}" ] || continue
+    if "${resolved}" -c 'import modelscope' >/dev/null 2>&1; then
+      MS_PYTHON="${resolved}"
+      echo "Using preinstalled ModelScope client: ${MS_PYTHON}"
+      break
+    fi
+  done
+fi
+
+if [ -z "${MS_PYTHON}" ] && [ "${INSTALL_MODELSCOPE_CLIENT:-0}" = 1 ]; then
   runtime_activate_venv
-  if ! python -c 'import modelscope' >/dev/null 2>&1; then
-    MODELSCOPE_PIP_INDEX_URL="${MODELSCOPE_PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}"
-    echo "Installing optional ModelScope downloader from ${MODELSCOPE_PIP_INDEX_URL}"
-    python -m pip install --index-url "${MODELSCOPE_PIP_INDEX_URL}" modelscope
-  fi
+  MODELSCOPE_PIP_INDEX_URL="${MODELSCOPE_PIP_INDEX_URL:-https://pypi.org/simple}"
+  echo "Explicitly installing optional ModelScope client from ${MODELSCOPE_PIP_INDEX_URL}"
+  python -m pip install --index-url "${MODELSCOPE_PIP_INDEX_URL}" modelscope
   MS_PYTHON="${VENV_DIR}/bin/python"
+fi
+
+if [ -z "${MS_PYTHON}" ]; then
+  echo "No Python interpreter with the ModelScope library was found." >&2
+  echo "Use the Notebook preinstalled client, set MODELSCOPE_PYTHON, or opt in with INSTALL_MODELSCOPE_CLIENT=1." >&2
+  exit 1
 fi
 
 ms_snapshot() {
@@ -83,36 +97,34 @@ download_video_models() {
 }
 
 download_image_models() {
-  local sdxl_repo="${SDXL_REPO:-AI-ModelScope/stable-diffusion-xl-base-1.0}"
-  local instant_repo="${INSTANTID_REPO:-InstantX/InstantID}"
-  local ip_repo="${IPADAPTER_REPO:-AI-ModelScope/IP-Adapter}"
-  local insight_repo="${INSIGHTFACE_REPO:-deepghs/insightface}"
-  local sdxl_cache="${MODEL_CACHE_ROOT}/${sdxl_repo//\//--}"
-  local instant_cache="${MODEL_CACHE_ROOT}/${instant_repo//\//--}"
-  local ip_cache="${MODEL_CACHE_ROOT}/${ip_repo//\//--}"
-  local insight_cache="${MODEL_CACHE_ROOT}/${insight_repo//\//--}"
+  local manifest="${IMAGE_MODEL_MANIFEST:-${PROJECT_DIR}/config/model-profiles/image.tsv}"
+  [ -f "${manifest}" ] || { echo "Image model manifest is missing: ${manifest}" >&2; return 1; }
+  echo "Downloading image profile from ${manifest}"
 
-  echo "Downloading image profile."
-  ms_snapshot "${sdxl_repo}" "${sdxl_cache}" "sd_xl_base_1.0.safetensors"
-  link_model "${sdxl_cache}/sd_xl_base_1.0.safetensors"     "${COMFY_DIR}/models/checkpoints/sd_xl_base_1.0.safetensors"
-
-  ms_snapshot "${instant_repo}" "${instant_cache}"     "ip-adapter.bin" "ControlNetModel/diffusion_pytorch_model.safetensors"
-  link_model "${instant_cache}/ip-adapter.bin"     "${COMFY_DIR}/models/instantid/ip-adapter.bin"
-  link_model "${instant_cache}/ControlNetModel/diffusion_pytorch_model.safetensors"     "${COMFY_DIR}/models/controlnet/instantid/diffusion_pytorch_model.safetensors"
-
-  ms_snapshot "${ip_repo}" "${ip_cache}"     "sdxl_models/ip-adapter-plus_sdxl_vit-h.safetensors"     "models/image_encoder/model.safetensors"
-  link_model "${ip_cache}/sdxl_models/ip-adapter-plus_sdxl_vit-h.safetensors"     "${COMFY_DIR}/models/ipadapter/ip-adapter-plus_sdxl_vit-h.safetensors"
-  link_model "${ip_cache}/models/image_encoder/model.safetensors"     "${COMFY_DIR}/models/clip_vision/CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors"
-
-  ms_snapshot "${insight_repo}" "${insight_cache}"
-  local antelope_dir
-  antelope_dir="$(find "${insight_cache}" -type d -name antelopev2 -print -quit)"
-  [ -n "${antelope_dir}" ] || {
-    echo "antelopev2 was not found in ${insight_repo}" >&2
-    return 1
-  }
-  mkdir -p "${COMFY_DIR}/models/insightface/models"
-  ln -sfn "${antelope_dir}" "${COMFY_DIR}/models/insightface/models/antelopev2"
+  local kind model_repo source target cache downloaded_dir
+  while IFS='|' read -r kind model_repo source target; do
+    [ -n "${kind}" ] || continue
+    case "${kind}" in \#*) continue ;; esac
+    cache="${MODEL_CACHE_ROOT}/${model_repo//\//--}"
+    case "${kind}" in
+      file)
+        ms_snapshot "${model_repo}" "${cache}" "${source}"
+        link_model "${cache}/${source}" "${COMFY_DIR}/models/${target}"
+        ;;
+      tree)
+        ms_snapshot "${model_repo}" "${cache}" "${source}"
+        downloaded_dir="$(find "${cache}" -type d -name "$(basename "${target}")" -print -quit)"
+        [ -n "${downloaded_dir}" ] || {
+          echo "Model directory $(basename "${target}") was not found in ${model_repo}" >&2
+          return 1
+        }
+        mkdir -p "$(dirname "${COMFY_DIR}/models/${target}")"
+        ln -sfn "${downloaded_dir}" "${COMFY_DIR}/models/${target}"
+        echo "Linked $(basename "${target}") -> ${COMFY_DIR}/models/${target}"
+        ;;
+      *) echo "Unsupported image manifest kind: ${kind}" >&2; return 2 ;;
+    esac
+  done < "${manifest}"
 }
 
 download_custom_model() {
