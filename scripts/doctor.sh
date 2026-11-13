@@ -75,12 +75,19 @@ if [ "${MODEL_PROFILE}" = "video" ] || [ "${MODEL_PROFILE}" = "all" ]; then
 fi
 
 if [ "${MODEL_PROFILE}" = "image" ] || [ "${MODEL_PROFILE}" = "all" ]; then
-  check_file "${COMFY_DIR}/models/instantid/ip-adapter.bin" "InstantID model"
-  check_file "${COMFY_DIR}/models/controlnet/instantid/diffusion_pytorch_model.safetensors" "InstantID ControlNet"
-  check_file "${COMFY_DIR}/models/checkpoints/sd_xl_base_1.0.safetensors" "SDXL base checkpoint"
-  check_file "${COMFY_DIR}/models/ipadapter/ip-adapter-plus_sdxl_vit-h.safetensors" "IPAdapter SDXL"
-  check_file "${COMFY_DIR}/models/clip_vision/CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors" "CLIP Vision"
-  check_dir "${COMFY_DIR}/models/insightface/models/antelopev2" "InsightFace antelopev2"
+  IMAGE_MODEL_MANIFEST="${IMAGE_MODEL_MANIFEST:-${PROJECT_DIR}/config/model-profiles/image.tsv}"
+  check_file "${IMAGE_MODEL_MANIFEST}" "Image model manifest"
+  if [ -f "${IMAGE_MODEL_MANIFEST}" ]; then
+    while IFS='|' read -r kind model_repo source target; do
+      [ -n "${kind}" ] || continue
+      case "${kind}" in \#*) continue ;; esac
+      case "${kind}" in
+        file) check_file "${COMFY_DIR}/models/${target}" "Image model: ${target}" ;;
+        tree) check_dir "${COMFY_DIR}/models/${target}" "Image model directory: ${target}" ;;
+        *) echo "MISS unsupported image manifest kind: ${kind}"; fail=1 ;;
+      esac
+    done < "${IMAGE_MODEL_MANIFEST}"
+  fi
 fi
 
 if [ "${MODEL_PROFILE}" = "custom" ]; then
