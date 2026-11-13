@@ -11,6 +11,7 @@ export TOOLS_HOME="${TEMP_ROOT}/tools"
 export VENV_DIR="${TEMP_ROOT}/missing-venv"
 export SHELL_HOME="${TEMP_ROOT}/shell"
 export CACHE_DIR="${TEMP_ROOT}/cache"
+export INSTALL_ZSH=0
 export INSTALL_OMZ=0
 export PIP_MIRROR=pypi
 export NPM_REGISTRY=https://registry.example.test/
