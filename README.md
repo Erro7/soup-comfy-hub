@@ -137,7 +137,7 @@ Image and video support are incremental and keep the same venv, ComfyUI checkout
 ```bash
 make init-image
 COMFY_PROFILE=image make comfy-profile-status
-COMFY_PROFILE=image MODEL_PROFILE=image make doctor
+COMFY_PROFILE=image make doctor-image
 
 make init-video
 COMFY_PROFILE=video make comfy-profile-status
@@ -148,11 +148,15 @@ Profile installation never downloads model weights. Model downloads remain separ
 
 ## Selective model downloads
 
-Model downloads are resumable and use the ModelScope client preinstalled by supported Notebook images when available.
+Model downloads are resumable and prefer the ModelScope library preinstalled by supported Notebook images. The downloader does not install ModelScope into the project venv unless `INSTALL_MODELSCOPE_CLIENT=1` is explicitly set.
+
+The image profile is declared in `config/model-profiles/image.tsv`. That manifest is shared by the downloader, Doctor, and workflow validator, so model filenames and ComfyUI paths cannot silently drift.
 
 ```bash
+make init-image
 make models-image
-MODEL_PROFILE=image make doctor
+make validate-workflows
+make doctor-image
 
 make models-video
 MODEL_PROFILE=video make doctor
