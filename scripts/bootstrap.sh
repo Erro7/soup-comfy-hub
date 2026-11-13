@@ -18,6 +18,11 @@ mkdir -p "${DATA_DIR}" "${PIP_CACHE_DIR}" "${TASK_OUTPUT_DIR}" "${LOG_DIR}"
 
 command -v git >/dev/null || { echo "git is required" >&2; exit 1; }
 
+if [ "${INITIALIZE_SHELL:-1}" = 1 ]; then
+  echo "Initializing persistent Bash/zsh, package configs, caches and optional Oh My Zsh."
+  bash "${PROJECT_DIR}/scripts/shell.sh" init
+fi
+
 if ! command -v ffmpeg >/dev/null; then
   if command -v apt-get >/dev/null && [ "$(id -u)" -eq 0 ]; then
     apt-get update
