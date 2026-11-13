@@ -66,6 +66,17 @@ make up        # every later container start
 
 Before `make up`, run `make doctor`. After startup, run `make smoke`.
 
+### Environment lifecycle modes
+
+| Mode | Base tools | Persistent/baked roots | Intended use |
+|---|---|---|---|
+| `build` | Installed by Dockerfile | `/opt/soup-env`, `/opt/venv`, `/opt/ComfyUI` | Reproducible Docker image with zsh, OMZ, tools and runtime baked in |
+| `docker` | Existing image plus explicit runtime initialization | Mounted `DATA_DIR` or user/project fallback | Plain or third-party containers that were not built by this project |
+| `linux` | Existing host plus apt/dnf/yum/apk when authorized | User/project persistent directories | Generic non-container Linux |
+| `modelscope` | Reuses platform Python, Torch and ModelScope | `/mnt/workspace/soup-comfy-data` | ModelScope/DSW notebooks with Alibaba internal mirrors |
+
+`SOUP_ENV_MODE=auto` detects normal runtime environments. `Dockerfile.runtime` explicitly uses `build`, installs system packages first, and bakes the interactive shell and standalone tools under `/opt/soup-env`. Runtime caches and user data remain separate volumes.
+
 ### Runtime portability
 
 The same runtime supports ModelScope Notebook and NVIDIA Docker. Notebook mode keeps its environment under the persistent workspace. The GPU container image bakes in Python, ComfyUI, custom nodes, and API dependencies at build time; startup does not install packages. Models and generated data are mounted as separate persistent volumes.
