@@ -17,10 +17,21 @@ platform_arch() {
 }
 
 platform_kind() {
-  if [ -f /.dockerenv ]; then
-    printf 'docker\n'
-  elif [ -n "${MODELSCOPE_ENVIRONMENT:-}" ] || [ -d /mnt/workspace ]; then
+  case "${SOUP_ENV_MODE:-auto}" in
+    build|docker|modelscope|linux)
+      printf '%s\n' "${SOUP_ENV_MODE}"
+      return
+      ;;
+    auto|"") ;;
+    *)
+      echo "Unsupported SOUP_ENV_MODE=${SOUP_ENV_MODE}; use auto, build, docker, modelscope, or linux." >&2
+      return 2
+      ;;
+  esac
+  if [ -n "${MODELSCOPE_ENVIRONMENT:-}" ] || [ -n "${MODELSCOPE_NOTEBOOK:-}" ] || [ -d /mnt/workspace ]; then
     printf 'modelscope\n'
+  elif [ -f /.dockerenv ]; then
+    printf 'docker\n'
   else
     printf 'linux\n'
   fi
