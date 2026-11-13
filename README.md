@@ -25,7 +25,7 @@ Required video anchors: `LOAD_FIRST_FRAME`, `PROMPT_POSITIVE`, `PROMPT_NEGATIVE`
 
 ## Make command contract
 
-All commands resolve the same `DATA_DIR`, `VENV_DIR`, `COMFY_DIR`, cache, logs, and PID file through `scripts/runtime_env.sh`. Only explicit initialization commands may install or update software.
+All commands resolve the same `DATA_DIR`, `VENV_DIR`, `COMFY_DIR`, cache, logs, and PID file through `scripts/runtime_env.sh`. Every `make init-*` profile initializes the persistent Bash/zsh foundation by default, including Oh My Zsh, histories, pip/npm configuration, package/model caches and standalone tool paths. Set `INITIALIZE_SHELL=0` only for non-interactive image builds. Only explicit initialization commands may install or update software.
 
 | Command | Contract |
 |---|---|
