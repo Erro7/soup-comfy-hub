@@ -33,7 +33,7 @@ This file is the source of truth for staged delivery. A phase is marked complete
 
 | Date | Phase | Result |
 |---|---:|---|
-| 2026-11-12 | 4 | Complete: cache-preserving mirror changes, direct Git fallback, explicit PyTorch source, official optional-package fallback, and minimal dependency renderer; Phase 5 core profile started |\n| 2026-11-12 | 3 | Complete: standalone venv lifecycle, base-Python compatibility state, restart reuse, explicit rebuild control, and pip-index/cache separation |\n| 2026-11-12 | 2 | Complete: venv-independent Bash/zsh initialization, project-scoped pip/npm configs, persistent package/model caches, optional OMZ, managed command execution and offline regression |\n| 2026-11-12 | 1 | Complete: path/platform/download libraries, standalone token-based cloudflared CLI, Make compatibility aliases, shared-shell PATH integration, and offline regression added |
+| 2026-11-12 | 5 | In progress: core/image/video/all installers, cumulative profile state, profile-aware doctor and startup preflight implemented; real ComfyUI readiness remains to be accepted on the GPU platform |\n| 2026-11-12 | 4 | Complete: cache-preserving mirror changes, direct Git fallback, explicit PyTorch source, official optional-package fallback, and minimal dependency renderer; Phase 5 core profile started |\n| 2026-11-12 | 3 | Complete: standalone venv lifecycle, base-Python compatibility state, restart reuse, explicit rebuild control, and pip-index/cache separation |\n| 2026-11-12 | 2 | Complete: venv-independent Bash/zsh initialization, project-scoped pip/npm configs, persistent package/model caches, optional OMZ, managed command execution and offline regression |\n| 2026-11-12 | 1 | Complete: path/platform/download libraries, standalone token-based cloudflared CLI, Make compatibility aliases, shared-shell PATH integration, and offline regression added |
 
 ## Phase 1 verification
 
@@ -63,6 +63,15 @@ This file is the source of truth for staged delivery. A phase is marked complete
 - Minimal ComfyUI requirements removed implicit Torch/CUDA and workflow-template media downloads.
 - Docker runtime configuration declares its PyTorch source explicitly.
 - Phase 1–4 offline regressions passed together.
+
+## Phase 5 implementation verification
+
+- Core profile resolved to zero optional custom nodes.
+- Image, video and all profile node matrices passed offline regression.
+- Profile installation state was verified cumulative across later upgrades.
+- Doctor defaults to the core profile and no model-weight checks.
+- Startup now refuses an uninitialized runtime with an actionable `make init-core` message.
+- Final phase acceptance still requires `make up && make smoke` on the target GPU platform.
 
 ## Git policy
 
