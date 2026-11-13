@@ -136,6 +136,32 @@ On a normal Linux host with systemd, `make tunnel-service-install` delegates to 
 
 The gateway binds to `127.0.0.1:8000`; Cloudflare should be the only public ingress. ComfyUI binds to loopback and is never exposed directly.
 
+## Fast SDXL LoRA training
+
+Image LoRA training is independent from Soup and from the ComfyUI image inference profile. Soup targets LLM fine-tuning; the fast image path uses the official `kohya-ss/sd-scripts` SDXL trainer in its own persistent venv while reusing the platform Torch/CUDA runtime.
+
+On ModelScope, restore the persistent non-root development user once:
+
+```bash
+git pull
+make user-env-init USERNAME=dev
+# The current shell can switch immediately; new terminals enter it automatically.
+exec su - dev
+```
+
+Prepare a directory containing PNG/JPEG/WebP images. Matching `.txt` captions are reused; when a caption is missing, the prepared training copy receives `TRAIN_TRIGGER` without modifying the source dataset.
+
+```bash
+make train-init
+make train \
+  TRAIN_DATA=/mnt/workspace/dev/datasets/ai-pose \
+  TRAIN_NAME=ai-pose \
+  TRAIN_TRIGGER=ai_pose \
+  TRAIN_EPOCHS=10
+```
+
+This path requires only the existing SDXL base checkpoint. It does not require InstantID, antelopev2, IPAdapter, ComfyUI startup, Gateway startup, Soup, or Cloudflare. The output is written directly under `ComfyUI/models/loras`. The A10-oriented defaults use BF16, SDPA, UNet-only LoRA, gradient checkpointing, and disk caches for latents and text-encoder outputs.
+
 ## ComfyUI installation profiles
 
 The default is API-first and intentionally small:
