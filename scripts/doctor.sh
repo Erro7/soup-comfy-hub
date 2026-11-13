@@ -83,7 +83,13 @@ if [ "${MODEL_PROFILE}" = "image" ] || [ "${MODEL_PROFILE}" = "all" ]; then
       case "${kind}" in \#*) continue ;; esac
       case "${kind}" in
         file) check_file "${COMFY_DIR}/models/${target}" "Image model: ${target}" ;;
-        tree) check_dir "${COMFY_DIR}/models/${target}" "Image model directory: ${target}" ;;
+        tree)
+          check_dir "${COMFY_DIR}/models/${target}" "Image model directory: ${target}"
+          if [ -d "${COMFY_DIR}/models/${target}" ] && ! find "${COMFY_DIR}/models/${target}" -type f -name '*.onnx' -print -quit | grep -q .; then
+            echo "MISS Image model directory has no ONNX files: ${target}"
+            fail=1
+          fi
+          ;;
         *) echo "MISS unsupported image manifest kind: ${kind}"; fail=1 ;;
       esac
     done < "${IMAGE_MODEL_MANIFEST}"
